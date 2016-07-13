@@ -24,7 +24,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include <upose>
+#include <upose.h>
 
 int main(int argc, char** argv) {
     if(argc != 2) {
@@ -32,7 +32,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    cv::Mat image = cv::imread(argv[2]);
+    std::string file(argv[1]);
+    cv::Mat image = cv::imread(file, CV_LOAD_IMAGE_COLOR);
     cv::Mat mask = upose::segmentHuman(image);
     cv::imshow("Mask", mask);
 

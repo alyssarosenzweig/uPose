@@ -8,11 +8,13 @@
 
 #include <opencv2/opencv.hpp>
 
-/**
- * segments a human from an image
- * returns a binary mask
- */
+namespace upose {
+    /**
+     * segments a human from an image
+     * returns a binary mask
+     */
 
-cv::Mat segmentHuman(cv::Mat& human) {
-    return human;
+    cv::Mat segmentHuman(cv::Mat& human) {
+        return human;
+    }
 }
