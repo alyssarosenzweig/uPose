@@ -15,6 +15,15 @@ namespace upose {
      */
 
     cv::Mat segmentHuman(cv::Mat& human) {
-        return human;
+        cv::Mat dogTemp;
+        cv::GaussianBlur(human, dogTemp, cv::Size(15, 15), 0);
+        cv::Mat edges = human - dogTemp;
+
+        cv::cvtColor(edges, edges, CV_BGR2GRAY);
+        edges.convertTo(edges, CV_32F);
+
+        cv::log(edges, edges);
+
+        return edges * 0.1;
     }
 }
