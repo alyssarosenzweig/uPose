@@ -9,4 +9,11 @@
 
 namespace upose {
     cv::Mat segmentStaticHuman(cv::Mat& image);
+
+    class Context {
+        public:
+            Context(cv::VideoCapture& camera);
+
+            void step();
+    };
 }

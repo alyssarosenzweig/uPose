@@ -7,7 +7,7 @@
  */
 
 #include <opencv2/opencv.hpp>
-
+#include <upose.h>
 
 namespace upose {
     /**
@@ -34,5 +34,13 @@ namespace upose {
         /* stub */
 
         return human;
+    }
+
+    Context::Context(cv::VideoCapture& camera) {
+        /* stub */
+    }
+
+    void Context::step() {
+        /* stub */
     }
 }

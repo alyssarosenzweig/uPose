@@ -11,6 +11,7 @@
  */
 
 #include <opencv2/opencv.hpp>
+#include <upose.h>
 
 int main(int argc, char** argv) {
     cv::VideoCapture camera(0);

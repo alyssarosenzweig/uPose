@@ -1,2 +1,2 @@
 lib/upose.o: src/upose.cpp
-	g++ -o lib/upose.o -c -fPIC src/upose.cpp -O3 -std=c++11
+	g++ -o lib/upose.o -c -fPIC src/upose.cpp -O3 -std=c++11 -I include
