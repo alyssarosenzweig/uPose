@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 
     std::string file(argv[1]);
     cv::Mat image = cv::imread(file, CV_LOAD_IMAGE_COLOR);
-    cv::Mat mask = upose::segmentHuman(image);
+    cv::Mat mask = upose::segmentStaticHuman(image);
     cv::imshow("Mask", mask);
 
     cv::waitKey(0);

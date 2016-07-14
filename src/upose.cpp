@@ -8,6 +8,7 @@
 
 #include <opencv2/opencv.hpp>
 
+
 namespace upose {
     /**
      * segments a human from a single image.
@@ -30,15 +31,7 @@ namespace upose {
      */
 
     cv::Mat segmentStaticHuman(cv::Mat& human) {
-        cv::Mat dogTemp;
-        cv::GaussianBlur(human, dogTemp, cv::Size(15, 15), 0);
-        cv::Mat edges = human - dogTemp;
 
-        cv::cvtColor(edges, edges, CV_BGR2GRAY);
-        edges.convertTo(edges, CV_32F);
-
-        cv::log(edges, edges);
-
-        return edges * 0.1;
+        return human;
     }
 }

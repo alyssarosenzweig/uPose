@@ -8,5 +8,5 @@
 #include <opencv2/opencv.hpp>
 
 namespace upose {
-    cv::Mat segmentHuman(cv::Mat& image);
+    cv::Mat segmentStaticHuman(cv::Mat& image);
 }
