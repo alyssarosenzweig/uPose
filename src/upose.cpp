@@ -31,6 +31,7 @@ namespace upose {
      */
 
     cv::Mat segmentStaticHuman(cv::Mat& human) {
+        /* stub */
 
         return human;
     }
