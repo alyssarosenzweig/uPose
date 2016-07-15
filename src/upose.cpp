@@ -52,17 +52,15 @@ namespace upose {
 
     /* identify humans in the foreground by size of contours */
 
-    std::vector<cv::Rect> Context::identifyHumans(cv::Mat foreground) {
-        std::vector<cv::Rect> humans;
-
+    std::vector<std::vector<cv::Point> > Context::identifyHumans(cv::Mat foreground) {
         cv::Mat edges = binaryEdges(foreground);
 
-        std::vector<std::vector<cv::Point> > contours;
+        std::vector<std::vector<cv::Point> > contours, humans;
         cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
         for(int i = 0; i < contours.size(); ++i) {
             if(cv::arcLength(contours[i], true) > 256) {
-                humans.push_back(cv::boundingRect(contours[i]));
+                humans.push_back(contours[i]);
             }
         }
 
@@ -74,13 +72,12 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
-        std::vector<cv::Rect> humans = identifyHumans(foreground);
+        std::vector<std::vector<cv::Point> > humans = identifyHumans(foreground);
 
         for(int i = 0; i < humans.size(); ++i) {
-            cv::rectangle(frame, humans[i], cv::Scalar(0, 0, 255), 10);
+            cv::rectangle(frame, cv::boundingBox(humans[i]), cv::Scalar(0, 0, 255), 10);
         }
 
-        cv::imshow("Foreground", foreground);
         cv::imshow("Frame", frame);
     }
 }
