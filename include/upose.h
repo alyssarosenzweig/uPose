@@ -19,5 +19,9 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
+
+            cv::Mat binaryEdges(cv::Mat binary);
+
+            std::vector<cv::Rect> identifyHumans(cv::Mat foreground);
     };
 }

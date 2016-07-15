@@ -37,13 +37,36 @@ namespace upose {
         return foreground;
     }
 
+    /* difference of blurs for edge detection on binary mask inputs */
+
+    cv::Mat Context::binaryEdges(cv::Mat binary) {
+        cv::Mat temp;
+
+        cv::blur(binary, temp, cv::Size(3, 3));
+        
+        cv::Mat edges = temp - binary;
+        cv::threshold(edges, edges, 32, 255, cv::THRESH_BINARY);
+        
+        return edges;
+    }
+
+    /* identify humans in the foreground by size of contours */
+
+    std::vector<cv::Rect> Context::identifyHumans(cv::Mat foreground) {
+        std::vector<cv::Rect> humans;
+
+        cv::imshow("Edges", binaryEdges(foreground));
+
+        return humans;
+    }
+
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
 
-        cv::Mat delta = backgroundSubtract(frame);
-        cv::cvtColor(delta, delta, CV_GRAY2BGR);
+        cv::Mat foreground = backgroundSubtract(frame);
+        std::vector<cv::Rect> humans = identifyHumans(foreground);
 
-        cv::imshow("Delta", delta);
+        cv::imshow("Foreground", foreground);
     }
 }
