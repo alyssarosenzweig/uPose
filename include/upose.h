@@ -24,5 +24,6 @@ namespace upose {
             cv::Mat backgroundSubtract(cv::Mat frame);
 
             cv::Mat m_egg;
+            int eggCounter = 0;
     };
 }

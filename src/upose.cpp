@@ -87,6 +87,15 @@ namespace upose {
         //cv::imshow("Delta", delta);
 
         /* easter egg */
-        cv::imshow("Postcard", (frame & delta) | (m_egg & ~delta));
+        cv::Mat postcard = (frame & delta) | (m_egg & ~delta);
+        cv::imshow("Postcard", postcard);
+
+        if(eggCounter == 200) {
+            cv::imwrite("postcard.jpg", postcard);
+            exit(0);
+        } else {
+            printf("%d\n", eggCounter);
+        }
+        ++eggCounter;
     }
 }
