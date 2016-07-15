@@ -56,12 +56,48 @@ namespace upose {
         cv::Mat edges = binaryEdges(foreground);
 
         std::vector<std::vector<cv::Point> > contours, humans;
-        cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+        cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
         for(int i = 0; i < contours.size(); ++i) {
             if(cv::arcLength(contours[i], true) > 256) {
                 humans.push_back(contours[i]);
             }
+        }
+
+        /* visualize error function */
+        cv::imshow("Foreground", foreground);
+
+        if(humans.size() == 1) {
+            // compute B
+            int board = 10000;
+            for(int j = 0; j < humans[0].size(); ++j) {
+                if(humans[0][j].y < board)
+                    board = humans[0][j].y;
+            }
+            
+            cv::Mat heat = cv::Mat::zeros(foreground.rows, foreground.cols, CV_8U);
+
+            for(int y = 0; y < foreground.rows; ++y) {
+                for(int x = 0; x < foreground.cols; ++x) {
+                    int accumulator = 0;
+
+                    for(int i = 0; i < humans[0].size(); ++i) {
+                        int dx = (humans[0][i].x - x);
+                        int dy = (humans[0][i].y - y);
+                        int d = (dx*dx) + (dy*dy);
+                        int b = (y - board);
+                        if( (dx*dx + dy*dy) > 0)
+                            accumulator += ((b*b) / d) + (0.5*d);
+                    }
+
+                    accumulator >>= 16;
+                    if(accumulator > 255) accumulator = 255;
+
+                    heat.at<char>(y, x) = accumulator;
+                }
+            }
+
+            cv::imshow("Heat", heat);
         }
 
         return humans;
@@ -73,10 +109,6 @@ namespace upose {
 
         cv::Mat foreground = backgroundSubtract(frame);
         std::vector<std::vector<cv::Point> > humans = identifyHumans(foreground);
-
-        for(int i = 0; i < humans.size(); ++i) {
-            cv::rectangle(frame, cv::boundingBox(humans[i]), cv::Scalar(0, 0, 255), 10);
-        }
 
         cv::imshow("Frame", frame);
     }

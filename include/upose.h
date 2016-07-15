@@ -22,6 +22,6 @@ namespace upose {
 
             cv::Mat binaryEdges(cv::Mat binary);
 
-            std::vector<std::vector<cv::Point >> identifyHumans(cv::Mat foreground);
+            std::vector<std::vector<cv::Point> > identifyHumans(cv::Mat foreground);
     };
 }
