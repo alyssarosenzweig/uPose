@@ -42,10 +42,10 @@ namespace upose {
     cv::Mat Context::binaryEdges(cv::Mat binary) {
         cv::Mat temp;
 
-        cv::blur(binary, temp, cv::Size(5, 5));
+        cv::blur(binary, temp, cv::Size(7, 7));
         
         cv::Mat edges = temp - binary;
-        cv::threshold(edges, edges, 16, 255, cv::THRESH_BINARY);
+        cv::threshold(edges, edges, 8, 255, cv::THRESH_BINARY);
         
         return edges;
     }
@@ -64,7 +64,7 @@ namespace upose {
         cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
         for(int i = 0; i < contours.size(); ++i) {
-            if(cv::arcLength(contours[i], true) > 128) {
+            if(cv::arcLength(contours[i], true) > 256) {
                 humans.push_back(cv::boundingRect(contours[i]));
                 cv::drawContours(foreground, contours, i, cv::Scalar(255, 0, 0), 10);
             }
