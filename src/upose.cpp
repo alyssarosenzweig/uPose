@@ -56,9 +56,6 @@ namespace upose {
         std::vector<cv::Rect> humans;
 
         cv::Mat edges = binaryEdges(foreground);
-        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
-
-        cv::imshow("Edges", edges);
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
@@ -66,11 +63,8 @@ namespace upose {
         for(int i = 0; i < contours.size(); ++i) {
             if(cv::arcLength(contours[i], true) > 256) {
                 humans.push_back(cv::boundingRect(contours[i]));
-                cv::drawContours(foreground, contours, i, cv::Scalar(255, 0, 0), 10);
             }
         }
-
-        cv::imshow("fg", foreground);
 
         return humans;
     }
