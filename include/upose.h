@@ -22,5 +22,7 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
+
+            cv::Mat m_egg;
     };
 }

@@ -48,6 +48,10 @@ namespace upose {
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         initializeStaticBackground();
+
+        // easter egg: human body detection doubles as background replacement
+        m_egg = cv::imread("./static/egg.jpg", CV_LOAD_IMAGE_COLOR);
+        cv::resize(m_egg, m_egg, m_background.size());
     }
 
     /**
@@ -77,11 +81,12 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat delta = backgroundSubtract(frame);
-
         cv::cvtColor(delta, delta, CV_GRAY2BGR);
-        cv::bitwise_and(frame, delta, delta);
 
-        cv::imshow("Frame", frame);
-        cv::imshow("Delta", delta);
+        //cv::imshow("Frame", frame);
+        //cv::imshow("Delta", delta);
+
+        /* easter egg */
+        cv::imshow("Postcard", (frame & delta) | (m_egg & ~delta));
     }
 }
