@@ -10,48 +10,8 @@
 #include <upose.h>
 
 namespace upose {
-    /**
-     * segments a human from a single image.
-     *
-     * the idea is to support still image detection
-     * existing real-time systems, such as:
-     * "Real-Time 3D Human Pose Estimation from Monocular View with
-     * Applications to Event Detection and Video Gaming" by Ke et al,
-     * rely on a trained background model.
-     * uPose does not make this assumption, hence this function
-     *
-     * segmentStaticHuman:
-     * takes an image of a scene assumed to have a human in it.
-     * returns a binary mask encompassing humans in the image.
-     *
-     * in the future, face recognition might be used to see if we get this far?
-     *
-     * TODO: determine if my dog should be included in this mask :-)
-     * (In seriousness, background subtraction has failed this way.)
-     */
-
-    cv::Mat segmentStaticHuman(cv::Mat& human) {
-        /* stub */
-
-        cv::CascadeClassifier classifier("./static/haarcascade_upperbody.xml");
-
-        std::vector<cv::Rect> objects;
-        classifier.detectMultiScale(human, objects, 1.1, 1);
-
-        for(int i = 0; i < objects.size(); ++i) {
-            cv::rectangle(human, objects[i], cv::Scalar(255, 0, 0));
-        }
-        printf("Objects: %d\n", objects.size());
-
-        return human;
-    }
-
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         initializeStaticBackground();
-
-        // easter egg: human body detection doubles as background replacement
-        m_egg = cv::imread("./static/egg.jpg", CV_LOAD_IMAGE_COLOR);
-        cv::resize(m_egg, m_egg, m_background.size());
     }
 
     /**
@@ -84,18 +44,6 @@ namespace upose {
         cv::cvtColor(delta, delta, CV_GRAY2BGR);
 
         //cv::imshow("Frame", frame);
-        //cv::imshow("Delta", delta);
-
-        /* easter egg */
-        cv::Mat postcard = (frame & delta) | (m_egg & ~delta);
-        cv::imshow("Postcard", postcard);
-
-        if(eggCounter == 200) {
-            cv::imwrite("postcard.jpg", postcard);
-            exit(0);
-        } else {
-            printf("%d\n", eggCounter);
-        }
-        ++eggCounter;
+        cv::imshow("Delta", delta);
     }
 }

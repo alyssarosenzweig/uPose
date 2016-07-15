@@ -8,8 +8,6 @@
 #include <opencv2/opencv.hpp>
 
 namespace upose {
-    cv::Mat segmentStaticHuman(cv::Mat& image);
-
     class Context {
         public:
             Context(cv::VideoCapture& camera);
@@ -22,8 +20,5 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
-
-            cv::Mat m_egg;
-            int eggCounter = 0;
     };
 }
