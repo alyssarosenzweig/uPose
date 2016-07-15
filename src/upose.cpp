@@ -10,8 +10,13 @@
 #include <upose.h>
 
 namespace upose {
+    /**
+     * Context class: maintains a skeletal tracking context
+     * the constructor initializes background subtraction, among other tasks
+     */
+
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
-        initializeStaticBackground();
+        m_camera.read(m_background);
     }
 
     /**
@@ -21,10 +26,6 @@ namespace upose {
      * foreground? = (background - foreground)^2 > 255 roughly
      * TODO: use something more robust
      */
-
-    void Context::initializeStaticBackground() {
-        m_camera.read(m_background);
-    }
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
         cv::Mat foreground = m_background - frame;
@@ -43,7 +44,6 @@ namespace upose {
         cv::Mat delta = backgroundSubtract(frame);
         cv::cvtColor(delta, delta, CV_GRAY2BGR);
 
-        //cv::imshow("Frame", frame);
         cv::imshow("Delta", delta);
     }
 }

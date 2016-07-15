@@ -11,7 +11,6 @@ namespace upose {
     class Context {
         public:
             Context(cv::VideoCapture& camera);
-            void initializeStaticBackground();
 
             void step();
 
