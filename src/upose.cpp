@@ -46,11 +46,32 @@ namespace upose {
         return human;
     }
 
-    Context::Context(cv::VideoCapture& camera) {
-        /* stub */
+    Context::Context(cv::VideoCapture& camera) : m_camera(camera),
+                                                 m_bsmog(cv::BackgroundSubtractorMOG2()) {
+        initializeStaticBackground();
+    }
+
+    /**
+     * background subtraction logic
+     */
+
+    void Context::initializeStaticBackground() {
+    }
+
+    cv::Mat Context::backgroundSubtract(cv::Mat frame) {
+        cv::Mat foreground;
+        m_bsmog(frame, foreground);
+
+        return foreground;
     }
 
     void Context::step() {
-        /* stub */
+        cv::Mat frame;
+        m_camera.read(frame);
+
+        cv::Mat delta = backgroundSubtract(frame);
+
+        cv::imshow("Frame", frame);
+        cv::imshow("Delta", delta);
     }
 }

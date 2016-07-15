@@ -13,7 +13,14 @@ namespace upose {
     class Context {
         public:
             Context(cv::VideoCapture& camera);
+            void initializeStaticBackground();
 
             void step();
+
+        private:
+            cv::VideoCapture& m_camera;
+
+            cv::BackgroundSubtractorMOG2 m_bsmog;
+            cv::Mat backgroundSubtract(cv::Mat frame);
     };
 }
