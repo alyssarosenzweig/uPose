@@ -33,6 +33,16 @@ namespace upose {
     cv::Mat segmentStaticHuman(cv::Mat& human) {
         /* stub */
 
+        cv::CascadeClassifier classifier("./static/haarcascade_upperbody.xml");
+
+        std::vector<cv::Rect> objects;
+        classifier.detectMultiScale(human, objects, 1.1, 1);
+
+        for(int i = 0; i < objects.size(); ++i) {
+            cv::rectangle(human, objects[i], cv::Scalar(255, 0, 0));
+        }
+        printf("Objects: %d\n", objects.size());
+
         return human;
     }
 
