@@ -55,7 +55,6 @@ namespace upose {
      * this is a very crude algorithm at the moment,
      * and will probably break.
      * foreground? = (background - foreground)^2 > 255 roughly
-     * additionally, an erosion filter is used to clean up individual pixels.
      * TODO: use something more robust
      */
 
@@ -70,16 +69,6 @@ namespace upose {
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         cv::threshold(foreground, foreground, 254, 255, cv::THRESH_BINARY);
 
-        int filterSize = 3;
-
-        cv::Mat element = cv::getStructuringElement(
-                                cv::MORPH_RECT,
-                                cv::Size(2 * filterSize + 1, 2 * filterSize + 1),
-                                cv::Point(filterSize, filterSize)
-                            );
-
-        cv::erode(foreground, foreground, element);
-
         return foreground;
     }
 
@@ -88,6 +77,9 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat delta = backgroundSubtract(frame);
+
+        cv::cvtColor(delta, delta, CV_GRAY2BGR);
+        cv::bitwise_and(frame, delta, delta);
 
         cv::imshow("Frame", frame);
         cv::imshow("Delta", delta);
