@@ -54,9 +54,10 @@ namespace upose {
 
     std::vector<std::vector<cv::Point> > Context::identifyHumans(cv::Mat foreground) {
         cv::Mat edges = binaryEdges(foreground);
+        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
 
         std::vector<std::vector<cv::Point> > contours, humans;
-        cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+        cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
         for(int i = 0; i < contours.size(); ++i) {
             if(cv::arcLength(contours[i], true) > 256) {
@@ -65,7 +66,6 @@ namespace upose {
         }
 
         /* visualize error function */
-        cv::imshow("Foreground", foreground);
 
         if(humans.size() == 1) {
             // compute B
@@ -75,29 +75,32 @@ namespace upose {
                     board = humans[0][j].y;
             }
             
-            cv::Mat heat = cv::Mat::zeros(foreground.rows, foreground.cols, CV_8U);
+            /* accumulate points */
+            int m = humans[0].size();
 
-            for(int y = 0; y < foreground.rows; ++y) {
-                for(int x = 0; x < foreground.cols; ++x) {
-                    int accumulator = 0;
-
-                    for(int i = 0; i < humans[0].size(); ++i) {
-                        int dx = (humans[0][i].x - x);
-                        int dy = (humans[0][i].y - y);
-                        int db = y - board;
-
-                        accumulator += (dx*dx) + (dy*dy) + (db*db);
-                    }
-
-                    accumulator >>= 20;
-                    if(accumulator > 255) accumulator = 255;
-
-                    heat.at<char>(y, x) = accumulator;
-                }
+            int accumulatorX = 0, accumulatorY = 0;
+            for(int i = 0; i < m; ++i) {
+                accumulatorX += humans[0][i].x;
+                accumulatorY += humans[0][i].y;
             }
 
-            cv::imshow("Heat", heat);
+            /* minimize error function with gradient descent */
+
+            float headX = 0.0f, headY = 0.0f;
+            float alpha = 0.0001f;
+
+            for(int iterations = 0; iterations < 50; ++iterations) {
+                float partialX = (m * headX) - accumulatorX;
+                float partialY = (m * headY) - accumulatorY - (m * (board - headY));
+
+                headX -= alpha * partialX;
+                headY -= alpha * partialY;
+           }
+
+            cv::circle(foreground, cv::Point(headX, headY), 10, cv::Scalar(0, 255, 0), -1);
         }
+
+        cv::imshow("Foreground", foreground);
 
         return humans;
     }
