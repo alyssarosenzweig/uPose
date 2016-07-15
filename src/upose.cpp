@@ -46,21 +46,28 @@ namespace upose {
         return human;
     }
 
-    Context::Context(cv::VideoCapture& camera) : m_camera(camera),
-                                                 m_bsmog(cv::BackgroundSubtractorMOG2()) {
+    Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         initializeStaticBackground();
     }
 
     /**
      * background subtraction logic
+     * this is a very crude algorithm at the moment,
+     * and will probably break.
+     * foreground? = (background - foreground)^2 > 255 roughly
+     * TODO: use something more robust
      */
 
     void Context::initializeStaticBackground() {
+        m_camera.read(m_background);
     }
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        cv::Mat foreground;
-        m_bsmog(frame, foreground);
+        cv::Mat foreground = m_background - frame;
+        cv::multiply(foreground, foreground, foreground);
+
+        cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+        cv::threshold(foreground, foreground, 254, 255, cv::THRESH_BINARY);
 
         return foreground;
     }

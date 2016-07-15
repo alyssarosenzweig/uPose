@@ -20,7 +20,7 @@ namespace upose {
         private:
             cv::VideoCapture& m_camera;
 
-            cv::BackgroundSubtractorMOG2 m_bsmog;
+            cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
     };
 }
