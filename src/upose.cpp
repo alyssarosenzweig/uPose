@@ -42,10 +42,10 @@ namespace upose {
     cv::Mat Context::binaryEdges(cv::Mat binary) {
         cv::Mat temp;
 
-        cv::blur(binary, temp, cv::Size(3, 3));
+        cv::blur(binary, temp, cv::Size(5, 5));
         
         cv::Mat edges = temp - binary;
-        cv::threshold(edges, edges, 32, 255, cv::THRESH_BINARY);
+        cv::threshold(edges, edges, 16, 255, cv::THRESH_BINARY);
         
         return edges;
     }
@@ -55,7 +55,22 @@ namespace upose {
     std::vector<cv::Rect> Context::identifyHumans(cv::Mat foreground) {
         std::vector<cv::Rect> humans;
 
-        cv::imshow("Edges", binaryEdges(foreground));
+        cv::Mat edges = binaryEdges(foreground);
+        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
+
+        cv::imshow("Edges", edges);
+
+        std::vector<std::vector<cv::Point> > contours;
+        cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+        for(int i = 0; i < contours.size(); ++i) {
+            if(cv::arcLength(contours[i], true) > 128) {
+                humans.push_back(cv::boundingRect(contours[i]));
+                cv::drawContours(foreground, contours, i, cv::Scalar(255, 0, 0), 10);
+            }
+        }
+
+        cv::imshow("fg", foreground);
 
         return humans;
     }
@@ -67,6 +82,11 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         std::vector<cv::Rect> humans = identifyHumans(foreground);
 
+        for(int i = 0; i < humans.size(); ++i) {
+            cv::rectangle(frame, humans[i], cv::Scalar(0, 0, 255), 10);
+        }
+
         cv::imshow("Foreground", foreground);
+        cv::imshow("Frame", frame);
     }
 }
