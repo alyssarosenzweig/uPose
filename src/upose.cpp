@@ -84,13 +84,12 @@ namespace upose {
                     for(int i = 0; i < humans[0].size(); ++i) {
                         int dx = (humans[0][i].x - x);
                         int dy = (humans[0][i].y - y);
-                        int d = (dx*dx) + (dy*dy);
-                        int b = (y - board);
-                        if( (dx*dx + dy*dy) > 0)
-                            accumulator += ((b*b) / d) + (0.5*d);
+                        int db = y - board;
+
+                        accumulator += (dx*dx) + (dy*dy) + (db*db);
                     }
 
-                    accumulator >>= 16;
+                    accumulator >>= 20;
                     if(accumulator > 255) accumulator = 255;
 
                     heat.at<char>(y, x) = accumulator;
