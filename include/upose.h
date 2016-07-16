@@ -24,8 +24,8 @@ namespace upose {
 
             std::vector<std::vector<cv::Point> > identifyHumans(cv::Mat foreground);
 
-            std::vector<double> cost2d(std::vector<cv::Point> human, Skeleton guess);
-            std::vector<double> gradient2d(std::vector<cv::Point> human, Skeleton guess);
+            Skeleton cost2d(std::vector<cv::Point> human, Skeleton guess);
+            Skeleton gradient2d(std::vector<cv::Point> human, Skeleton guess);
     };
 
     class Skeleton {
