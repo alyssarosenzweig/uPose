@@ -17,6 +17,8 @@ namespace upose {
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
+        m_background.convertTo(m_background, CV_32FC3);
+        cv::cvtColor(m_background, m_background, CV_BGR2HSV);
     }
 
     /**
@@ -28,11 +30,18 @@ namespace upose {
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        cv::Mat foreground = m_background - frame;
-        cv::multiply(foreground, foreground, foreground);
+        frame.convertTo(frame, CV_32FC3);
+        cv::cvtColor(frame, frame, CV_BGR2HSV);
+        cv::imshow("F", frame);
+        cv::imshow("B", m_background);
 
+        cv::Mat foreground = cv::abs(m_background - frame);
+
+        cv::cvtColor(foreground, foreground, CV_HSV2BGR);
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
-        cv::threshold(foreground, foreground, 254, 255, cv::THRESH_BINARY);
+        cv::imshow("Pre", foreground);
+        cv::threshold(foreground, foreground, 32, 255, cv::THRESH_BINARY);
+        foreground.convertTo(foreground, CV_8UC3);
 
         return foreground;
     }
