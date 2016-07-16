@@ -123,6 +123,20 @@ namespace upose {
         return humans;
     }
 
+    std::vector<double> Context::cost2d(
+            std::vector<cv::Point> human,
+            Skeleton guess
+    ) {
+        /* stub */
+    }
+
+    std::vector<double> Context::gradient2d(
+            std::vector<cv::Point> human,
+            Skeleton guess
+    ) {
+        /* stub */
+    }
+
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);

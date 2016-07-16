@@ -23,5 +23,16 @@ namespace upose {
             cv::Mat binaryEdges(cv::Mat binary);
 
             std::vector<std::vector<cv::Point> > identifyHumans(cv::Mat foreground);
+
+            std::vector<double> cost2d(std::vector<cv::Point> human, Skeleton guess);
+            std::vector<double> gradient2d(std::vector<cv::Point> human, Skeleton guess);
     };
+
+    class Skeleton {
+        public:
+            cv::Point head;
+            cv::Point shoulderL, neck, shoulderR;
+            cv::Point elbowL, elbowR;
+            cv::Point handL, handR;
+    }
 }
