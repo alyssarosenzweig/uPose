@@ -69,13 +69,27 @@ namespace upose {
 
         if(humans.size() == 1) {
             Skeleton guess;
-            double alpha = 0.01;
+
+            /* initialize center to mean */
+            int totalX = 0, totalY = 0;
+
+            for(int i = 0; i < humans[0].size(); ++i) {
+                totalX += humans[0][i].x;
+                totalY += humans[0][i].y;
+            }
+
+            guess.center.x = totalX / humans[0].size();
+            guess.center.y = totalY / humans[0].size();
+
+            /*double alpha = 0.01;
             
             for(int iteration = 0; iteration < 50; ++iteration) {
                 Skeleton gradient = gradient2d(humans[0], guess);
 
-                guess.head = 
-            }
+                guess.head -= alpha *  
+            }*/
+
+            cv::circle(foreground, guess.center, 20, cv::Scalar(255, 0, 0), -1);
         }
 
         cv::imshow("Foreground", foreground);
