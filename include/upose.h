@@ -12,7 +12,14 @@ namespace upose {
         public:
             cv::Point head;
 
-            cv::Vec3i neck, shoulderL, shoulderR;
+            cv::Vec2i neck, shoulderL, shoulderR;
+
+            cv::Mat visualize(cv::Mat image);
+
+            cv::Point head2d() { return head; }
+            cv::Point neck2d() { return head + neck; }
+            cv::Point shoulderL() { return head + neck + shoulderL; }
+            cv::Point shoulderR() { return head + neck + shoulderR; }
     };
 
     class Context {

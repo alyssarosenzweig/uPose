@@ -83,4 +83,12 @@ namespace upose {
 
         cv::imshow("Frame", frame);
     }
+
+    cv::Mat Skeleton::visualize(cv::Mat image) {
+        cv::circle(image, head2d(), 25, cv::Scalar(255, 0, 0), -1);
+        cv::circle(image, neck2d(), 25, cv::Scalar(255, 255, 255), 5);
+        cv::circle(image, lshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
+        cv::circle(image, rshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
+    }
+
 }
