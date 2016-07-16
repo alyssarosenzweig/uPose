@@ -14,7 +14,7 @@ namespace upose {
 
             cv::Point neck, lshoulder, rshoulder;
 
-            cv::Mat visualize(cv::Mat image);
+            void visualize(cv::Mat image);
 
             cv::Point head2d() { return head; }
             cv::Point neck2d() { return neck; }

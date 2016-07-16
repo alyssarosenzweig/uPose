@@ -62,7 +62,7 @@ namespace upose {
         std::vector<std::vector<cv::Point> > contours, humans;
         cv::findContours(edges, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
-        for(int i = 0; i < contours.size(); ++i) {
+        for(unsigned int i = 0; i < contours.size(); ++i) {
             if(cv::arcLength(contours[i], true) > 256) {
                 humans.push_back(contours[i]);
             }
@@ -71,8 +71,13 @@ namespace upose {
         return humans;
     }
 
-    Skeleton computeSkeleton2D(std::vector<cv::Point> human) {
+    Skeleton Context::computeSkeleton2D(std::vector<cv::Point> /* human */) {
         Skeleton guess;
+
+        guess.head = cv::Point(200, 200);
+        guess.neck = cv::Point(200, 250);
+        guess.lshoulder = cv::Point(150, 250);
+        guess.rshoulder = cv::Point(250, 250);
 
         /* stub */
 
@@ -88,14 +93,13 @@ namespace upose {
 
         if(humans.size() == 1) {
             Skeleton skeleton = computeSkeleton2D(humans[0]);
-
             skeleton.visualize(frame);
         }
 
         cv::imshow("Frame", frame);
     }
 
-    cv::Mat Skeleton::visualize(cv::Mat image) {
+    void Skeleton::visualize(cv::Mat image) {
         cv::circle(image, head2d(), 25, cv::Scalar(255, 0, 0), -1);
         cv::circle(image, neck2d(), 25, cv::Scalar(255, 255, 255), 5);
         cv::circle(image, lshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
