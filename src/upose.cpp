@@ -33,9 +33,7 @@ namespace upose {
 
         cv::Mat foreground;
         cv::absdiff(m_background, frame, foreground);
-        cv::imshow("Pre", foreground);
         cv::divide(foreground, frame, foreground);
-        cv::imshow("Post", foreground);
 
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         cv::threshold(foreground, foreground, 0.5, 255, cv::THRESH_BINARY);
