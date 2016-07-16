@@ -22,10 +22,8 @@ namespace upose {
 
     /**
      * background subtraction logic
-     * this is a very crude algorithm at the moment,
-     * and will probably break.
-     * foreground? = (background - foreground)^2 > 255 roughly
-     * TODO: use something more robust
+     * |background - frame| / frame.
+     * The extra division in there helps account for illumination.
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
