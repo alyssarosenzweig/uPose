@@ -71,6 +71,13 @@ namespace upose {
         return humans;
     }
 
+    Skeleton computeSkeleton2D(std::vector<cv::Point> human) {
+        Skeleton guess;
+
+        /* stub */
+
+        return guess;
+    }
 
     void Context::step() {
         cv::Mat frame;
@@ -78,6 +85,12 @@ namespace upose {
 
         cv::Mat foreground = backgroundSubtract(frame);
         std::vector<std::vector<cv::Point> > humans = identifyHumans(foreground);
+
+        if(humans.size() == 1) {
+            Skeleton skeleton = computeSkeleton2D(humans[0]);
+
+            skeleton.visualize(frame);
+        }
 
         cv::imshow("Frame", frame);
     }
