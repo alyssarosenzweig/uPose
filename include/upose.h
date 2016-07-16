@@ -11,10 +11,8 @@ namespace upose {
     class Skeleton {
         public:
             cv::Point head;
-            cv::Point shoulderL, neck, shoulderR;
-            cv::Point elbowL, elbowR;
-            cv::Point handL, handR;
-            cv::Point center;
+
+            cv::Vec3i neck, shoulderL, shoulderR;
     };
 
     class Context {
@@ -32,8 +30,5 @@ namespace upose {
             cv::Mat binaryEdges(cv::Mat binary);
 
             std::vector<std::vector<cv::Point> > identifyHumans(cv::Mat foreground);
-
-            Skeleton cost2d(std::vector<cv::Point> human, Skeleton guess);
-            Skeleton gradient2d(std::vector<cv::Point> human, Skeleton guess);
     };
 }
