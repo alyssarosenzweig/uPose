@@ -29,18 +29,18 @@ namespace upose {
 
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         cv::threshold(foreground, foreground, 0.1, 255, cv::THRESH_BINARY);
+        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
 
-        return foreground;
+        return foreground & frame;
     }
 
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
 
-        cv::Mat foreground = backgroundSubtract(frame);
-        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
+        cv::Mat foreground = backgroundSubtract(frame) & frame;
         
-        cv::imshow("You!", foreground & frame);
+        cv::imshow("You!", foreground);
     }
 
     void Skeleton::visualize(cv::Mat image) {
