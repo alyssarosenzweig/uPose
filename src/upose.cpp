@@ -27,11 +27,12 @@ namespace upose {
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        frame.convertTo(frame, CV_32FC3);
+        cv::Mat fframe;
+        frame.convertTo(fframe, CV_32FC3);
 
         cv::Mat foreground;
-        cv::absdiff(m_background, frame, foreground);
-        cv::divide(foreground, frame, foreground);
+        cv::absdiff(m_background, fframe, foreground);
+        cv::divide(foreground, fframe, foreground);
 
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         cv::threshold(foreground, foreground, 0.5, 255, cv::THRESH_BINARY);
@@ -45,8 +46,9 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
-
-        cv::imshow("Frame", frame);
+        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
+        
+        cv::imshow("You!", foreground & frame);
     }
 
     void Skeleton::visualize(cv::Mat image) {
