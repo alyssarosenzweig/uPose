@@ -21,7 +21,6 @@ namespace upose {
 
     /**
      * background subtraction logic
-     * |background - frame| / frame.
      * The extra division in there helps account for illumination.
      */
 
