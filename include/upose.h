@@ -37,11 +37,5 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
-
-            cv::Mat binaryEdges(cv::Mat binary);
-
-            std::vector<std::vector<cv::Point> > identifyHumans(cv::Mat foreground);
-
-            Skeleton computeSkeleton2D(std::vector<cv::Point> human);
     };
 }
