@@ -26,12 +26,10 @@ namespace upose {
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        cv::Mat foreground;
-        cv::absdiff(m_background, frame, foreground);
-        cv::divide(foreground, frame, foreground);
+        cv::Mat foreground = cv::abs(m_background - frame) / frame;
 
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
-        cv::threshold(foreground, foreground, 0.5, 255, cv::THRESH_BINARY);
+        cv::threshold(foreground, foreground, 0.1, 255, cv::THRESH_BINARY);
 
         return foreground;
     }
