@@ -6,13 +6,16 @@
  * ALL RIGHTS RESERVED
  */
 
+#include <stdio.h>
+#include <unistd.h>
+#define STDOUT 0
 #include <opencv2/opencv.hpp>
 #include <upose.h>
 
 namespace upose {
     /**
      * Context class: maintains a skeletal tracking context
-     * the constructor initializes background subtraction, among other tasks
+     G* the constructor initializes background subtraction, among other tasks
      */
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
@@ -46,9 +49,13 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
-        cv::threshold(I, I, 4, 255, cv::THRESH_BINARY);
 
-        cv::cvtColor(I, I, CV_GRAY2BGR);
+        /* upper bound determined empirally */
+        cv::Mat skin, notSkin;
+        cv::threshold(I, skin, 2, 255, cv::THRESH_BINARY);
+        cv::threshold(I, notSkin, 16, 255, cv::THRESH_BINARY_INV);
+
+        cv::cvtColor(skin & notSkin, I, CV_GRAY2BGR);
         return I;
     }
 
@@ -57,38 +64,37 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
-        cv::Mat skin = skinRegions(frame);
+        cv::Mat skin = skinRegions(frame) & foreground;
 
-        cv::imshow("Image", skin & foreground);
+        cv::Mat sgrey;
+        cv::cvtColor(skin, sgrey, CV_BGR2GRAY);
 
-/*        cv::blur(foreground, foreground, cv::Size(21, 21));
-        cv::threshold(foreground, foreground, 1, 255, cv::THRESH_BINARY);
+        cv::blur(sgrey, sgrey, cv::Size(15, 15));
+        cv::threshold(sgrey, sgrey, 100, 255, cv::THRESH_BINARY);
 
         std::vector<std::vector<cv::Point> > contours;
-        cv::findContours(foreground, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+        cv::findContours(sgrey, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
         std::vector<std::vector<cv::Point> > hulls(contours.size());
 
-        
         for(unsigned int i = 0; i < contours.size(); ++i) {
+            //int len = cv::arcLength(contours[i]);
+
             cv::convexHull(contours[i], hulls[i], false);
 
-            //cv::drawContours(frame, hulls, i, cv::Scalar(255, 0, 0), 10);
-            //cv::drawContours(frame, contours, i, cv::Scalar(0, 0, 255), 10);
+            cv::Rect bounding = cv::boundingRect(contours[i]);
+            /*double aspectW = bounding.width / bounding.height;
+            double aspectH = bounding.height / bounding.width;
+            double aspectG = aspectW > aspectH ? aspectW : aspectH;*/
 
-            for(unsigned int j = 0; j < contours[i].size() - 1; ++j) {
-                double theta = atan2(
-                        contours[i][j+1].y - contours[i][j].y,
-                        contours[i][j+1].x - contours[i][j].x
-                    );
-
-                double d = sinf(theta);
-                double c = d*d < 0.001 ? 255 : 0;
-
-                cv::line(frame, contours[i][j+1], contours[i][j], cv::Scalar(c, c, c), 15);
-                                
+            if(/*aspectG < 3 &&*/ bounding.width > 32) {
+                cv::drawContours(skin, hulls, i, cv::Scalar(255, 0, 0), 10);
+                cv::drawContours(skin, contours, i, cv::Scalar(0, 0, 255), 10);
+                cv::rectangle(skin, cv::boundingRect(contours[i]), cv::Scalar(0, 255, 0), 10);
             }
-        }*/
+        }
+
+        cv::imshow("Streamed", skin);
 
     }
 
