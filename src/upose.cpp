@@ -38,10 +38,27 @@ namespace upose {
         cv::Mat frame;
         m_camera.read(frame);
 
-        cv::Mat foreground = backgroundSubtract(frame);
-        cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+        /* convert frame to (Y)I(Q) space for skin color thresholding
+         * the Y and Q components are not necessary, however.
+         * algorithm from Brand and Mason 2000
+         * "A comparative assessment of three
+         * approaches to pixel level human skin-detection"
+         */
 
-        cv::blur(foreground, foreground, cv::Size(21, 21));
+        cv::Mat bgr[3];
+        cv::split(frame, bgr);
+
+        cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
+        cv::threshold(I, I, 8, 255, cv::THRESH_BINARY);
+        cv::cvtColor(I, I, CV_GRAY2BGR);
+
+        cv::Mat foreground = backgroundSubtract(frame);
+        //cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+
+        cv::imshow("Foreground", frame & (I & foreground));
+        cv::imshow("Discrepency", I & ~foreground);
+
+/*        cv::blur(foreground, foreground, cv::Size(21, 21));
         cv::threshold(foreground, foreground, 1, 255, cv::THRESH_BINARY);
 
         std::vector<std::vector<cv::Point> > contours;
@@ -68,7 +85,7 @@ namespace upose {
                 cv::line(frame, contours[i][j+1], contours[i][j], cv::Scalar(c, c, c), 15);
                                 
             }
-        }
+        }*/
 
         cv::imshow("M", frame);
     }
