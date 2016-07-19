@@ -39,27 +39,38 @@ namespace upose {
         m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
+        cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
 
-        /* segment skin */
-        /* I really want to replace this for so many reasons
-         * notably, it assumes the skin color of the user (light in my case)
-         * TODO: find a better algorithm
-         */
+        cv::blur(foreground, foreground, cv::Size(21, 21));
+        cv::threshold(foreground, foreground, 1, 255, cv::THRESH_BINARY);
 
-        cv::Mat channels[3];
-        cv::split(frame, channels);
-        cv::Mat skinSpace = cv::abs(channels[1] - channels[2]);
+        std::vector<std::vector<cv::Point> > contours;
+        cv::findContours(foreground, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-        cv::Mat lowerSkin, upperSkin;
-        cv::threshold(skinSpace, lowerSkin, 4, 255, cv::THRESH_BINARY);
-        cv::threshold(skinSpace, upperSkin, 14, 255, cv::THRESH_BINARY_INV);
+        std::vector<std::vector<cv::Point> > hulls(contours.size());
+
         
-        cv::Mat skin;
-        cv::blur(lowerSkin & upperSkin, skin, cv::Size(5, 5));
-        cv::threshold(skin, skin, 1, 255, cv::THRESH_BINARY);
-        cv::cvtColor(skin, skin, CV_GRAY2BGR);
+        for(unsigned int i = 0; i < contours.size(); ++i) {
+            cv::convexHull(contours[i], hulls[i], false);
 
-        cv::imshow("M", foreground & skin);
+            //cv::drawContours(frame, hulls, i, cv::Scalar(255, 0, 0), 10);
+            //cv::drawContours(frame, contours, i, cv::Scalar(0, 0, 255), 10);
+
+            for(unsigned int j = 0; j < contours[i].size() - 1; ++j) {
+                double theta = atan2(
+                        contours[i][j+1].y - contours[i][j].y,
+                        contours[i][j+1].x - contours[i][j].x
+                    );
+
+                double d = sinf(theta);
+                double c = d*d < 0.001 ? 255 : 0;
+
+                cv::line(frame, contours[i][j+1], contours[i][j], cv::Scalar(c, c, c), 15);
+                                
+            }
+        }
+
+        cv::imshow("M", frame);
     }
 
     void Skeleton::visualize(cv::Mat image) {
