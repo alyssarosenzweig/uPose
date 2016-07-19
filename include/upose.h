@@ -37,5 +37,7 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
+
+            cv::Mat skinRegions(cv::Mat frame);
     };
 }

@@ -34,29 +34,32 @@ namespace upose {
         return foreground;
     }
 
-    void Context::step() {
-        cv::Mat frame;
-        m_camera.read(frame);
+     /* convert frame to (Y)I(Q) space for skin color thresholding
+     * the Y and Q components are not necessary, however.
+     * algorithm from Brand and Mason 2000
+     * "A comparative assessment of three
+     * approaches to pixel level human skin-detection"
+     */
 
-        /* convert frame to (Y)I(Q) space for skin color thresholding
-         * the Y and Q components are not necessary, however.
-         * algorithm from Brand and Mason 2000
-         * "A comparative assessment of three
-         * approaches to pixel level human skin-detection"
-         */
-
+    cv::Mat Context::skinRegions(cv::Mat frame) {
         cv::Mat bgr[3];
         cv::split(frame, bgr);
 
         cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
-        cv::threshold(I, I, 8, 255, cv::THRESH_BINARY);
+        cv::threshold(I, I, 4, 255, cv::THRESH_BINARY);
+
         cv::cvtColor(I, I, CV_GRAY2BGR);
+        return I;
+    }
+
+    void Context::step() {
+        cv::Mat frame;
+        m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
-        //cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+        cv::Mat skin = skinRegions(frame);
 
-        cv::imshow("Foreground", frame & (I & foreground));
-        cv::imshow("Discrepency", I & ~foreground);
+        cv::imshow("Image", skin & foreground);
 
 /*        cv::blur(foreground, foreground, cv::Size(21, 21));
         cv::threshold(foreground, foreground, 1, 255, cv::THRESH_BINARY);
@@ -87,7 +90,6 @@ namespace upose {
             }
         }*/
 
-        cv::imshow("M", frame);
     }
 
     void Skeleton::visualize(cv::Mat image) {
