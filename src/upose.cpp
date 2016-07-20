@@ -59,6 +59,8 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame) & foreground;
 
+        cv::Mat visualization = skin;
+
         cv::Mat sgrey;
         cv::cvtColor(skin, sgrey, CV_BGR2GRAY);
 
@@ -72,12 +74,15 @@ namespace upose {
             cv::Rect bounding = cv::boundingRect(contours[i]);
 
             if(bounding.width > 32 && bounding.height > 32) {
-                cv::drawContours(skin, contours, i, cv::Scalar(0, 0, 255), 10);
-                cv::rectangle(skin, bounding, cv::Scalar(0, 255, 0), 10);
+                cv::drawContours(visualization, contours, i, cv::Scalar(0, 0, 255), 10);
+                cv::rectangle(visualization, bounding, cv::Scalar(0, 255, 0), 10);
+
+                cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
+                cv::circle(visualization, centroid, 16, cv::Scalar(255, 0, 0), -1);
             }
         }
 
-        cv::imshow("Streamed", skin);
+        cv::imshow("Streamed", visualization);
 
     }
 
