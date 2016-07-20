@@ -69,6 +69,9 @@ namespace upose {
     void Context::track2DFeatures(cv::Mat foreground, cv::Mat skin) {
         cv::Mat tracked = foreground & skin;
 
+        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
+        cv::imshow("Tracked", tracked);
+
         cv::blur(tracked, tracked, cv::Size(15, 15));
         cv::threshold(tracked, tracked, 100, 255, cv::THRESH_BINARY);
 
@@ -92,17 +95,17 @@ namespace upose {
                 centroids.push_back(centroid);
 
                 std::vector<int> cost;
-                cost.push_back(cv::norm(m_last2D.face - centroid));
-                cost.push_back(cv::norm(m_last2D.leftHand - centroid));
-                cost.push_back(cv::norm(m_last2D.rightHand - centroid));
+                cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y);
+                cost.push_back(cv::norm(m_last2D.leftHand - centroid) + centroid.x);
+                cost.push_back(cv::norm(m_last2D.rightHand - centroid) + (foreground.cols - centroid.x));
 
                 costs.push_back(cost);
             }
 
             std::vector<int> minFace = {
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64
             };
 
             std::vector<int> indices = { -1, -1, -1 };
