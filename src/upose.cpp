@@ -121,6 +121,8 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
 
+        cv::imshow("Foreground", foreground);
+
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
