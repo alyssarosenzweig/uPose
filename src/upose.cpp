@@ -71,7 +71,7 @@ namespace upose {
         for(unsigned int i = 0; i < contours.size(); ++i) {
             cv::Rect bounding = cv::boundingRect(contours[i]);
 
-            if(bounding.width > 32) {
+            if(bounding.width > 32 && bounding.height > 32) {
                 cv::drawContours(skin, contours, i, cv::Scalar(0, 0, 255), 10);
                 cv::rectangle(skin, bounding, cv::Scalar(0, 255, 0), 10);
             }
