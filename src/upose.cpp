@@ -114,10 +114,9 @@ namespace upose {
                 }
             }
 
-            if(indices[0] > -1) {
-                m_last2D.face = centroids[indices[0]];
-                cv::circle(tracked, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
-            }
+            if(indices[0] > -1) m_last2D.face      = centroids[indices[0]];
+            if(indices[1] > -1) m_last2D.leftHand  = centroids[indices[1]];
+            if(indices[2] > -1) m_last2D.rightHand = centroids[indices[2]];
         }
 
         cv::imshow("Skin", tracked);
@@ -131,6 +130,12 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
 
         track2DFeatures(foreground, skin);
+
+        cv::circle(frame, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
+        cv::circle(frame, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
+        cv::circle(frame, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
+
+        cv::imshow("Frame", frame);
     }
 
     void Skeleton::visualize(cv::Mat image) {
