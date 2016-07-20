@@ -98,9 +98,9 @@ namespace upose {
             }
 
             std::vector<int> minFace = {
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 32,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 32,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 32
             };
 
             std::vector<int> indices = { -1, -1, -1 };
