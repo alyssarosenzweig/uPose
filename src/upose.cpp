@@ -59,7 +59,7 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame) & foreground;
 
-        cv::Mat visualization = skin;
+        cv::Mat visualization = frame;
 
         cv::Mat sgrey;
         cv::cvtColor(skin, sgrey, CV_BGR2GRAY);
@@ -70,15 +70,23 @@ namespace upose {
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(sgrey, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-        for(unsigned int i = 0; i < contours.size(); ++i) {
-            cv::Rect bounding = cv::boundingRect(contours[i]);
+        std::sort(contours.begin(),
+                 contours.end(),
+                 [](std::vector<cv::Point> l, std::vector<cv::Point> r) {
+                    return cv::boundingRect(l).width > cv::boundingRect(r).width;
+                 });
 
-            if(bounding.width > 32 && bounding.height > 32) {
-                cv::drawContours(visualization, contours, i, cv::Scalar(0, 0, 255), 10);
-                cv::rectangle(visualization, bounding, cv::Scalar(0, 255, 0), 10);
+        if(contours.size() >= 3) {
+            for(unsigned int i = 0; i < 3; ++i) {
+                cv::Rect bounding = cv::boundingRect(contours[i]);
 
-                cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
-                cv::circle(visualization, centroid, 16, cv::Scalar(255, 0, 0), -1);
+                if(bounding.width > 32 && bounding.height > 32) {
+                    cv::drawContours(visualization, contours, i, cv::Scalar(0, 0, 255), 10);
+                    cv::rectangle(visualization, bounding, cv::Scalar(0, 255, 0), 10);
+
+                    cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
+                    cv::circle(visualization, centroid, 16, cv::Scalar(255, 0, 0), -1);
+                }
             }
         }
 
