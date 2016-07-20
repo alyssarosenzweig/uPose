@@ -85,14 +85,10 @@ namespace upose {
 
                 centroids.push_back(centroid);
 
-                cv::Point dface = m_last2D.face - centroid,
-                          dleftHand = m_last2D.leftHand - centroid,
-                          drightHand = m_last2D.rightHand - centroid;
-
                 std::vector<int> cost;
-                cost.push_back(dface.dot(dface));
-                cost.push_back(dleftHand.dot(dleftHand));
-                cost.push_back(drightHand.dot(drightHand));
+                cost.push_back(cv::norm(m_last2D.face - centroid));
+                cost.push_back(cv::norm(m_last2D.leftHand - centroid));
+                cost.push_back(cv::norm(m_last2D.rightHand - centroid));
 
                 costs.push_back(cost);
             }
