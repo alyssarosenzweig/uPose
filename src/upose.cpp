@@ -67,8 +67,6 @@ namespace upose {
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
         
-        cv::cvtColor(tracked, tracked, CV_GRAY2BGR);
-
         std::sort(contours.begin(),
                  contours.end(),
                  [](std::vector<cv::Point> l, std::vector<cv::Point> r) {
@@ -114,8 +112,6 @@ namespace upose {
             if(indices[1] > -1) m_last2D.leftHand  = centroids[indices[1]];
             if(indices[2] > -1) m_last2D.rightHand = centroids[indices[2]];
         }
-
-        cv::imshow("Skin", tracked);
     }
 
     void Context::step() {
