@@ -12,7 +12,7 @@
 namespace upose {
     /**
      * Context class: maintains a skeletal tracking context
-     G* the constructor initializes background subtraction, 2d tracking
+     * the constructor initializes background subtraction, 2d tracking, edges
      */
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
@@ -21,6 +21,14 @@ namespace upose {
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
         m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
+
+        /* edge detection against the background */
+
+        cv::Mat temp1, temp2;
+        cv::blur(m_background, temp1, cv::Size(5, 5));
+        cv::blur(m_background, temp2, cv::Size(9, 9));
+
+        m_bgEdges = temp1 - temp2;
     }
 
     /**
