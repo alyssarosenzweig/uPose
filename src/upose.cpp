@@ -66,6 +66,8 @@ namespace upose {
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+        
+        cv::cvtColor(tracked, tracked, CV_GRAY2BGR);
 
         std::sort(contours.begin(),
                  contours.end(),
@@ -73,14 +75,41 @@ namespace upose {
                     return cv::boundingRect(l).width > cv::boundingRect(r).width;
                  });
 
+        std::vector<cv::Point> centroids;
+        std::vector<double> faceCosts;
+        std::vector<double> leftHandCosts;
+        std::vector<double> rightHandCosts;
+
         if(contours.size() >= 3) {
             for(unsigned int i = 0; i < 3; ++i) {
                 cv::Rect bounding = cv::boundingRect(contours[i]);
+                cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
 
-                if(bounding.width > 32 && bounding.height > 32) {
-                    cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
-                    cv::circle(tracked, centroid, 16, cv::Scalar(255, 0, 0), -1);
+                centroids.push_back(centroid);
+
+                cv::Point dface = m_last2D.face - centroid,
+                          dleftHand = m_last2D.leftHand - centroid,
+                          drightHand = m_last2D.rightHand - centroid;
+
+                faceCosts.push_back(dface.dot(dface));
+                leftHandCosts.push_back(dleftHand.dot(dleftHand));
+                rightHandCosts.push_back(drightHand.dot(drightHand));
+            }
+
+            double minFace = (skin.rows*skin.rows + skin.cols*skin.cols) / 16;
+
+            int faceIndex = -1;
+
+            for(unsigned int i = 0; i < 3; ++i) {
+                if(faceCosts[i] < minFace) {
+                    minFace = faceCosts[i];
+                    faceIndex = i;
                 }
+            }
+
+            if(faceIndex > -1) {
+                m_last2D.face = centroids[faceIndex];
+                cv::circle(tracked, centroids[faceIndex], 10, cv::Scalar(0, 255, 0), -1);
             }
         }
 
