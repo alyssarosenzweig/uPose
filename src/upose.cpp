@@ -72,7 +72,7 @@ namespace upose {
         std::sort(contours.begin(),
                  contours.end(),
                  [](std::vector<cv::Point> l, std::vector<cv::Point> r) {
-                    return cv::boundingRect(l).area() > cv::boundingRect(r).area();
+                    return cv::boundingRect(l).width > cv::boundingRect(r).width;
                  });
 
         std::vector<cv::Point> centroids;
@@ -125,11 +125,15 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
 
-        track2DFeatures(foreground, skin);
+        if(m_initiated) {
+            track2DFeatures(foreground, skin);
 
-        cv::circle(frame, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
-        cv::circle(frame, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
-        cv::circle(frame, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
+            cv::circle(frame, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
+            cv::circle(frame, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
+            cv::circle(frame, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
+        } else {
+            m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
+        }
 
         cv::imshow("Frame", frame);
     }

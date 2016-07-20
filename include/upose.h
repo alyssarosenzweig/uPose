@@ -47,5 +47,7 @@ namespace upose {
 
             Features2D m_last2D;
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);
+
+            bool m_initiated;
     };
 }
