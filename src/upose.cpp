@@ -72,7 +72,7 @@ namespace upose {
         std::sort(contours.begin(),
                  contours.end(),
                  [](std::vector<cv::Point> l, std::vector<cv::Point> r) {
-                    return cv::boundingRect(l).width > cv::boundingRect(r).width;
+                    return cv::boundingRect(l).area() > cv::boundingRect(r).area();
                  });
 
         std::vector<cv::Point> centroids;
