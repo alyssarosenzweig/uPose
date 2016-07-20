@@ -6,9 +6,6 @@
  * ALL RIGHTS RESERVED
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#define STDOUT 0
 #include <opencv2/opencv.hpp>
 #include <upose.h>
 
@@ -37,11 +34,11 @@ namespace upose {
         return foreground;
     }
 
-     /* convert frame to (Y)I(Q) space for skin color thresholding
-     * the Y and Q components are not necessary, however.
-     * algorithm from Brand and Mason 2000
-     * "A comparative assessment of three
-     * approaches to pixel level human skin-detection"
+     /**
+      * convert frame to (Y)I(Q) space for skin color thresholding
+      * the Y and Q components are not necessary, however.
+      * algorithm from Brand and Mason 2000
+      * "A comparative assessment of three approaches to pixel level human skin-detection"
      */
 
     cv::Mat Context::skinRegions(cv::Mat frame) {
@@ -49,13 +46,9 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
+        cv::threshold(I, I, 2, 255, cv::THRESH_BINARY);
 
-        /* upper bound determined empirally */
-        cv::Mat skin, notSkin;
-        cv::threshold(I, skin, 2, 255, cv::THRESH_BINARY);
-        cv::threshold(I, notSkin, 16, 255, cv::THRESH_BINARY_INV);
-
-        cv::cvtColor(skin & notSkin, I, CV_GRAY2BGR);
+        cv::cvtColor(I, I, CV_GRAY2BGR);
         return I;
     }
 
@@ -75,22 +68,12 @@ namespace upose {
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(sgrey, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
-        std::vector<std::vector<cv::Point> > hulls(contours.size());
-
         for(unsigned int i = 0; i < contours.size(); ++i) {
-            //int len = cv::arcLength(contours[i]);
-
-            cv::convexHull(contours[i], hulls[i], false);
-
             cv::Rect bounding = cv::boundingRect(contours[i]);
-            /*double aspectW = bounding.width / bounding.height;
-            double aspectH = bounding.height / bounding.width;
-            double aspectG = aspectW > aspectH ? aspectW : aspectH;*/
 
-            if(/*aspectG < 3 &&*/ bounding.width > 32) {
-                cv::drawContours(skin, hulls, i, cv::Scalar(255, 0, 0), 10);
+            if(bounding.width > 32) {
                 cv::drawContours(skin, contours, i, cv::Scalar(0, 0, 255), 10);
-                cv::rectangle(skin, cv::boundingRect(contours[i]), cv::Scalar(0, 255, 0), 10);
+                cv::rectangle(skin, bounding, cv::Scalar(0, 255, 0), 10);
             }
         }
 
