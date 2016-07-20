@@ -76,9 +76,7 @@ namespace upose {
                  });
 
         std::vector<cv::Point> centroids;
-        std::vector<double> faceCosts;
-        std::vector<double> leftHandCosts;
-        std::vector<double> rightHandCosts;
+        std::vector<std::vector<int> > costs;
 
         if(contours.size() >= 3) {
             for(unsigned int i = 0; i < 3; ++i) {
@@ -91,25 +89,34 @@ namespace upose {
                           dleftHand = m_last2D.leftHand - centroid,
                           drightHand = m_last2D.rightHand - centroid;
 
-                faceCosts.push_back(dface.dot(dface));
-                leftHandCosts.push_back(dleftHand.dot(dleftHand));
-                rightHandCosts.push_back(drightHand.dot(drightHand));
+                std::vector<int> cost;
+                cost.push_back(dface.dot(dface));
+                cost.push_back(dleftHand.dot(dleftHand));
+                cost.push_back(drightHand.dot(drightHand));
+
+                costs.push_back(cost);
             }
 
-            double minFace = (skin.rows*skin.rows + skin.cols*skin.cols) / 16;
+            std::vector<int> minFace = {
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16,
+                    (skin.rows*skin.rows + skin.cols*skin.cols) / 16
+            };
 
-            int faceIndex = -1;
+            std::vector<int> indices = { -1, -1, -1 };
 
             for(unsigned int i = 0; i < 3; ++i) {
-                if(faceCosts[i] < minFace) {
-                    minFace = faceCosts[i];
-                    faceIndex = i;
+                for(unsigned int p = 0; p < 3; ++p) {
+                    if(costs[i][p] < minFace[p]) {
+                        minFace[p] = costs[i][p];
+                        indices[p] = i;
+                    }
                 }
             }
 
-            if(faceIndex > -1) {
-                m_last2D.face = centroids[faceIndex];
-                cv::circle(tracked, centroids[faceIndex], 10, cv::Scalar(0, 255, 0), -1);
+            if(indices[0] > -1) {
+                m_last2D.face = centroids[indices[0]];
+                cv::circle(tracked, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
             }
         }
 
