@@ -12,11 +12,15 @@
 namespace upose {
     /**
      * Context class: maintains a skeletal tracking context
-     G* the constructor initializes background subtraction, among other tasks
+     G* the constructor initializes background subtraction, 2d tracking
      */
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
+
+        m_last2D.face = cv::Point(m_background.cols / 2, 0);
+        m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
+        m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
     }
 
     /**
@@ -29,7 +33,6 @@ namespace upose {
 
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         cv::threshold(foreground, foreground, 0.1, 255, cv::THRESH_BINARY);
-        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
 
         return foreground;
     }
@@ -39,7 +42,7 @@ namespace upose {
       * the Y and Q components are not necessary, however.
       * algorithm from Brand and Mason 2000
       * "A comparative assessment of three approaches to pixel level human skin-detection"
-     */
+      */
 
     cv::Mat Context::skinRegions(cv::Mat frame) {
         cv::Mat bgr[3];
@@ -47,28 +50,22 @@ namespace upose {
 
         cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
         cv::threshold(I, I, 2, 255, cv::THRESH_BINARY);
-
-        cv::cvtColor(I, I, CV_GRAY2BGR);
         return I;
     }
 
-    void Context::step() {
-        cv::Mat frame;
-        m_camera.read(frame);
+    /**
+     * tracks 2D features only, in 2D coordinates
+     * that is, the face, the hands, and the feet
+     */
 
-        cv::Mat foreground = backgroundSubtract(frame);
-        cv::Mat skin = skinRegions(frame) & foreground;
+    void Context::track2DFeatures(cv::Mat foreground, cv::Mat skin) {
+        cv::Mat tracked = foreground & skin;
 
-        cv::Mat visualization = frame;
-
-        cv::Mat sgrey;
-        cv::cvtColor(skin, sgrey, CV_BGR2GRAY);
-
-        cv::blur(sgrey, sgrey, cv::Size(15, 15));
-        cv::threshold(sgrey, sgrey, 100, 255, cv::THRESH_BINARY);
+        cv::blur(tracked, tracked, cv::Size(15, 15));
+        cv::threshold(tracked, tracked, 100, 255, cv::THRESH_BINARY);
 
         std::vector<std::vector<cv::Point> > contours;
-        cv::findContours(sgrey, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+        cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
         std::sort(contours.begin(),
                  contours.end(),
@@ -81,17 +78,23 @@ namespace upose {
                 cv::Rect bounding = cv::boundingRect(contours[i]);
 
                 if(bounding.width > 32 && bounding.height > 32) {
-                    cv::drawContours(visualization, contours, i, cv::Scalar(0, 0, 255), 10);
-                    cv::rectangle(visualization, bounding, cv::Scalar(0, 255, 0), 10);
-
                     cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
-                    cv::circle(visualization, centroid, 16, cv::Scalar(255, 0, 0), -1);
+                    cv::circle(tracked, centroid, 16, cv::Scalar(255, 0, 0), -1);
                 }
             }
         }
 
-        cv::imshow("Streamed", visualization);
+        cv::imshow("Skin", tracked);
+    }
 
+    void Context::step() {
+        cv::Mat frame;
+        m_camera.read(frame);
+
+        cv::Mat foreground = backgroundSubtract(frame);
+        cv::Mat skin = skinRegions(frame);
+
+        track2DFeatures(foreground, skin);
     }
 
     void Skeleton::visualize(cv::Mat image) {

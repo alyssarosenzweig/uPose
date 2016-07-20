@@ -26,6 +26,11 @@ namespace upose {
             cv::Vec2i rshoulderD() { return rshoulder - neck; }
     };
 
+    class Features2D {
+        public:
+            cv::Point face, leftHand, rightHand, leftFoot, rightFoot;
+    };
+
     class Context {
         public:
             Context(cv::VideoCapture& camera);
@@ -39,5 +44,8 @@ namespace upose {
             cv::Mat backgroundSubtract(cv::Mat frame);
 
             cv::Mat skinRegions(cv::Mat frame);
+
+            Features2D m_last2D;
+            void track2DFeatures(cv::Mat foreground, cv::Mat skin);
     };
 }
