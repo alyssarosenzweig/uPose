@@ -21,12 +21,6 @@ namespace upose {
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
         m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
-
-        cv::Mat temp;
-        cv::cvtColor(m_background, temp, CV_BGR2GRAY);
-
-        cv::Scharr(temp, m_bgSobelX, -1, 1, 0);
-        cv::Scharr(temp, m_bgSobelY, -1, 0, 1);
    }
 
     /**
@@ -123,15 +117,13 @@ namespace upose {
         cv::cvtColor(frame, temp, CV_BGR2GRAY);
 
         cv::Mat sx, sy;
-        cv::Scharr(temp, sx, CV_8U, 1, 0);
-        cv::Scharr(temp, sy, CV_8U, 0, 1);
+        cv::Sobel(temp, sx, -1, 1, 0, 5);
+        cv::Sobel(temp, sy, -1, 0, 1, 5);
 
-        cv::Mat dx = cv::abs(sx - m_bgSobelX) * 0.5,
-                dy = cv::abs(sy - m_bgSobelY) * 0.5,
-                rx = sx > m_bgSobelX,
-                ry = sy > m_bgSobelY;
+        cv::imshow("SX", sx * 8);
+        cv::imshow("Sy", sy * 8);
 
-        return (dx & rx) + (dy & ry) > 8;
+        return (sx + sy) > 16;
     }
 
     void Context::step() {
