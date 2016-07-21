@@ -36,11 +36,9 @@ namespace upose {
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
         cv::Mat foreground = cv::abs(m_background - frame) / frame;
-
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
-        cv::threshold(foreground, foreground, 0.1, 255, cv::THRESH_BINARY);
 
-        return foreground;
+        return foreground > 0;
     }
 
      /**
@@ -54,9 +52,7 @@ namespace upose {
         cv::Mat bgr[3];
         cv::split(frame, bgr);
 
-        cv::Mat I = (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]);
-        cv::threshold(I, I, 2, 255, cv::THRESH_BINARY);
-        return I;
+        return (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]) > 2;
     }
 
     /**
@@ -70,7 +66,7 @@ namespace upose {
         cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
 
         cv::blur(tracked, tracked, cv::Size(9, 9));
-        cv::threshold(tracked, tracked, 127, 255, cv::THRESH_BINARY);
+        tracked = tracked > 127;
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
