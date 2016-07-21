@@ -72,8 +72,10 @@ namespace upose {
         cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
         cv::imshow("Tracked", tracked);
 
-        cv::blur(tracked, tracked, cv::Size(15, 15));
-        cv::threshold(tracked, tracked, 100, 255, cv::THRESH_BINARY);
+        cv::blur(tracked, tracked, cv::Size(9, 9));
+        cv::threshold(tracked, tracked, 127, 255, cv::THRESH_BINARY);
+
+        cv::imshow("Pruned", tracked);
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -131,8 +133,6 @@ namespace upose {
 
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
-
-        cv::imshow("Foreground", foreground);
 
         if(m_initiated) {
             track2DFeatures(foreground, skin);
