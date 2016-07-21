@@ -45,6 +45,8 @@ namespace upose {
 
             cv::Mat skinRegions(cv::Mat frame);
 
+            cv::Mat edges(cv::Mat frame);
+
             Features2D m_last2D;
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);
 

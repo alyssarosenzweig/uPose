@@ -12,7 +12,7 @@
 namespace upose {
     /**
      * Context class: maintains a skeletal tracking context
-     * the constructor initializes background subtraction, 2d tracking, edges
+     * the constructor initializes background subtraction, 2d tracking
      */
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
@@ -21,15 +21,7 @@ namespace upose {
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
         m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
-
-        /* edge detection against the background */
-
-        cv::Mat temp1, temp2;
-        cv::blur(m_background, temp1, cv::Size(5, 5));
-        cv::blur(m_background, temp2, cv::Size(9, 9));
-
-        m_bgEdges = temp1 - temp2;
-    }
+   }
 
     /**
      * background subtraction logic
@@ -70,12 +62,9 @@ namespace upose {
         cv::Mat tracked = foreground & skin;
 
         cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
-        cv::imshow("Tracked", tracked);
 
         cv::blur(tracked, tracked, cv::Size(9, 9));
         cv::threshold(tracked, tracked, 127, 255, cv::THRESH_BINARY);
-
-        cv::imshow("Pruned", tracked);
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -127,12 +116,34 @@ namespace upose {
         }
     }
 
+    cv::Mat Context::edges(cv::Mat frame) {
+        /*cv::Mat temp;
+        cv::blur(frame, temp, cv::Size(13, 13));
+        cv::threshold(temp - frame, temp, 4, 255, cv::THRESH_BINARY);
+
+        cv::cvtColor(temp, temp, CV_BGR2GRAY);*/
+
+        cv::Mat temp;
+        cv::cvtColor(frame, temp, CV_BGR2GRAY);
+        temp.convertTo(temp, CV_32F);
+
+        cv::Mat sx, sy, mag;
+        cv::Scharr(temp, sx, -1, 1, 0);
+        cv::Scharr(temp, sy, -1, 0, 1);
+
+        cv::magnitude(sx, sy, mag);
+        return mag / 64;
+    }
+
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
 
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
+
+        cv::Mat edgeImage = edges(frame);
+        cv::imshow("Edges", edgeImage);
 
         if(m_initiated) {
             track2DFeatures(foreground, skin);
