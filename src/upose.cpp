@@ -21,6 +21,12 @@ namespace upose {
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
         m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
+
+        cv::Mat temp;
+        cv::cvtColor(m_background, temp, CV_BGR2GRAY);
+
+        cv::Scharr(temp, m_bgSobelX, -1, 1, 0);
+        cv::Scharr(temp, m_bgSobelY, -1, 0, 1);
    }
 
     /**
@@ -117,22 +123,19 @@ namespace upose {
     }
 
     cv::Mat Context::edges(cv::Mat frame) {
-        /*cv::Mat temp;
-        cv::blur(frame, temp, cv::Size(13, 13));
-        cv::threshold(temp - frame, temp, 4, 255, cv::THRESH_BINARY);
-
-        cv::cvtColor(temp, temp, CV_BGR2GRAY);*/
-
         cv::Mat temp;
         cv::cvtColor(frame, temp, CV_BGR2GRAY);
-        temp.convertTo(temp, CV_32F);
 
-        cv::Mat sx, sy, mag;
-        cv::Scharr(temp, sx, -1, 1, 0);
-        cv::Scharr(temp, sy, -1, 0, 1);
+        cv::Mat sx, sy;
+        cv::Scharr(temp, sx, CV_8U, 1, 0);
+        cv::Scharr(temp, sy, CV_8U, 0, 1);
 
-        cv::magnitude(sx, sy, mag);
-        return mag / 64;
+        cv::Mat dx = cv::abs(sx - m_bgSobelX) * 0.5,
+                dy = cv::abs(sy - m_bgSobelY) * 0.5,
+                rx = sx > m_bgSobelX,
+                ry = sy > m_bgSobelY;
+
+        return (dx & rx) + (dy & ry) > 8;
     }
 
     void Context::step() {
@@ -143,7 +146,7 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
 
         cv::Mat edgeImage = edges(frame);
-        cv::imshow("Edges", edgeImage);
+        cv::imshow("Edges", edgeImage & foreground);
 
         if(m_initiated) {
             track2DFeatures(foreground, skin);
