@@ -161,6 +161,21 @@ namespace upose {
         return edges;
     }
 
+    int projectJoint(int* joints, int index, int Y) {
+        int Z = joints[index + 2];
+
+        if(Z == 0 || Z < 0) return 0;
+
+        return joints[index + Y] / joints[index + 2];
+    }
+
+    cv::Point jointPoint(int* joints, int index) {
+        return cv::Point(
+                projectJoint(joints, index, 0),
+                projectJoint(joints, index, 1)
+            );
+    }
+
     int costFunction3D(UpperBodySkeleton skel, void* humanPtr) {
         Human* human = (Human*) humanPtr;
 
@@ -187,10 +202,6 @@ namespace upose {
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
-            cv::circle(visualization, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
-            cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
-            cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
-
             Human human(foreground, skin, m_last2D);
 
             UpperBodySkeleton optima;
@@ -207,8 +218,6 @@ namespace upose {
     }
 
     void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
-        cv::Point handl = cv::Point(skel[JOINT_HANDL + 0], skel[JOINT_HANDL + 1]);
-
-        cv::circle(image, handl, 25, cv::Scalar(0, 0, 255), -1);
+        cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
     }
 }
