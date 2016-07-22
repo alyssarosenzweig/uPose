@@ -188,9 +188,7 @@ namespace upose {
             cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
 
             int optima[] = { 0, 0 };
-            optimizeRandomSearch(costFunction3D, 2, 40, 10, optima);
-
-            printf("(%d, %d)\n", optima[0], optima[1]);
+            optimizeRandomSearch(costFunction3D, 2, 400, 10, optima);
 
             cv::circle(visualization, cv::Point(optima[0], optima[1]), 10, cv::Scalar(255, 255, 255), -1);
         } else {
