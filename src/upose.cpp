@@ -7,6 +7,9 @@
  */
 
 #include <opencv2/opencv.hpp>
+
+#include <opencv2/flann/flann.hpp>
+
 #include <upose.h>
 
 namespace upose {
@@ -121,6 +124,11 @@ namespace upose {
         return edges;
     }
 
+    int costFunction3D(int points[2]) {
+        /* stub */
+        return (points[0] - 150) * (points[0] - 150) + (points[1] - 100) * (points[1] - 100);
+    }
+
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
@@ -142,6 +150,22 @@ namespace upose {
             cv::circle(visualization, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
             cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
             cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
+
+            int N = 2;
+            int simplexPoints[N * (N + 1)];
+
+            /* initialize randomly for now */
+            for(int i = 0; i < N; ++i) {
+                for(int j = 0; j < N + 1; ++j) {
+                    /* FIXME: rand considered harmful? */
+
+                    simplexPoints[(i*N) + j] = rand() % 300;
+                }
+            }
+
+            cvflann::optimizeSimplexDownhill(simplexPoints, N, costFunction3D);
+
+            cv::circle(visualization, cv::Point(simplexPoints[0], simplexPoints[1]), 10, cv::Scalar(255, 255, 255), -1);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
         }
