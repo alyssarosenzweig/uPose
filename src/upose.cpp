@@ -210,17 +210,15 @@ namespace upose {
 
             Human human(foreground, skin, m_last2D);
 
-            UpperBodySkeleton optima;
+            optimizeRandomSearch(costFunction3D, sizeof(m_skeleton) / sizeof(int), 2000, 30, m_skeleton, (void*) &human);
 
-            for(unsigned int i = 0; i < sizeof(optima) / sizeof(int); i += sizeof(int)) {
-                optima[i] = 1;
-            }
-
-            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 2000, 30, optima, (void*) &human);
-
-            visualizeUpperSkeleton(visualization, optima);
+            visualizeUpperSkeleton(visualization, m_skeleton);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
+
+            for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); i += sizeof(int)) {
+                m_skeleton[i] = 1;
+            }
         }
 
         cv::imshow("visualization", visualization);
