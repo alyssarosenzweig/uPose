@@ -8,8 +8,6 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <opencv2/flann/flann.hpp>
-
 #include <upose.h>
 
 namespace upose {
@@ -154,15 +152,6 @@ namespace upose {
             int N = 2;
             int simplexPoints[N * (N + 1)];
 
-            /* initialize randomly for now */
-            for(int i = 0; i < N; ++i) {
-                for(int j = 0; j < N + 1; ++j) {
-                    /* FIXME: rand considered harmful? */
-
-                    simplexPoints[(i*N) + j] = rand() % 300;
-                }
-            }
-
             cvflann::optimizeSimplexDownhill(simplexPoints, N, costFunction3D);
 
             cv::circle(visualization, cv::Point(simplexPoints[0], simplexPoints[1]), 10, cv::Scalar(255, 255, 255), -1);
@@ -182,4 +171,5 @@ namespace upose {
         cv::circle(image, rshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
     }
 
+    void optimizeDownhillSimplex(double* points, int dimension, 
 }
