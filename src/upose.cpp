@@ -25,17 +25,15 @@ namespace upose {
         ) {
         size_t size = sizeof(int) * dimension;
 
-        int* candidate = malloc(size);
+        int* candidate = (int*) malloc(size);
         memcpy(candidate, optimum, size);
 
         int best = cost(optimum);
 
         for(int iteration = 0; iteration < iterationCount; ++iteration) {
             /* step algorithm */
-
-            for(int d = 0; d < dimension; ++d) {
-                candidate[d] = optimum[d] + (rand() % radius);
-            }
+            int dim = iteration % dimension;
+            candidate[dim] = optimum[dim] + (rand() % radius);
 
             /* save if a better solution */
             int candidateCost = cost(candidate);
@@ -43,6 +41,8 @@ namespace upose {
             if(candidateCost < best) {
                 memcpy(optimum, candidate, size);
                 best = candidateCost;
+            } else {
+                candidate[dim] = optimum[dim];
             }
         }
 
@@ -162,7 +162,7 @@ namespace upose {
 
     int costFunction3D(int points[2]) {
         /* stub */
-        return (points[0] - 150) * (points[0] - 150) + (points[1] - 100) * (points[1] - 100);
+        return ((points[0] - 150) * (points[0] - 150)) + ((points[1] - 10) * (points[1] - 10));
     }
 
     void Context::step() {
@@ -187,12 +187,12 @@ namespace upose {
             cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
             cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
 
-            int N = 2;
-            int simplexPoints[N * (N + 1)];
+            int optima[] = { 0, 0 };
+            optimizeRandomSearch(costFunction3D, 2, 40, 10, optima);
 
-            cvflann::optimizeSimplexDownhill(simplexPoints, N, costFunction3D);
+            printf("(%d, %d)\n", optima[0], optima[1]);
 
-            cv::circle(visualization, cv::Point(simplexPoints[0], simplexPoints[1]), 10, cv::Scalar(255, 255, 255), -1);
+            cv::circle(visualization, cv::Point(optima[0], optima[1]), 10, cv::Scalar(255, 255, 255), -1);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
         }
