@@ -17,18 +17,19 @@ namespace upose {
      */
 
     void optimizeRandomSearch(
-            int (*cost)(int*), /* cost function to minimize */
+            int (*cost)(int*, void*), /* cost function to minimize */
             int dimension, /* dimension of cost function */
             int iterationCount, /* number of iterations to run */
             int radius, /* radius of hypersphere */
-            int* optimum /* on entry, initial configuration. on exit, minimum */
+            int* optimum, /* on entry, initial configuration. on exit, minimum */
+            void* context /* (read-only) data to be passed to the cost function */
         ) {
         size_t size = sizeof(int) * dimension;
 
         int* candidate = (int*) malloc(size);
         memcpy(candidate, optimum, size);
 
-        int best = cost(optimum);
+        int best = cost(optimum, context);
 
         for(int iteration = 0; iteration < iterationCount; ++iteration) {
             /* step algorithm */
@@ -36,7 +37,7 @@ namespace upose {
             candidate[dim] = optimum[dim] + (rand() % radius);
 
             /* save if a better solution */
-            int candidateCost = cost(candidate);
+            int candidateCost = cost(candidate, context);
 
             if(candidateCost < best) {
                 memcpy(optimum, candidate, size);
@@ -160,12 +161,15 @@ namespace upose {
         return edges;
     }
 
-    int costFunction3D(UpperBodySkeleton skel) {
+    int costFunction3D(UpperBodySkeleton skel, void* humanPtr) {
+        Human* human = (Human*) humanPtr;
+
         /* stub */
 
-        int lhandCost = skel[JOINT_HANDL + 0] - 100;
+        int lhandCostX = (skel[JOINT_HANDL + 0] - human->projected.leftHand.x);
+        int lhandCostY = (skel[JOINT_HANDL + 1] - human->projected.leftHand.y);
 
-        return lhandCost * lhandCost;
+        return (lhandCostX * lhandCostX) + (lhandCostY * lhandCostY);
     }
 
     void Context::step() {
@@ -180,9 +184,6 @@ namespace upose {
         cv::Mat motion = cv::abs(frame - m_lastFrame);
         cv::cvtColor(motion, motion, CV_BGR2GRAY);
 
-        cv::imshow("Foreground", foreground);
-        cv::imshow("Motion Edges", edgeImage);
-
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
@@ -190,8 +191,10 @@ namespace upose {
             cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
             cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
 
+            Human human(foreground, skin, m_last2D);
+
             UpperBodySkeleton optima;
-            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 400, 10, optima);
+            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 800, 30, optima, (void*) &human);
 
             visualizeUpperSkeleton(visualization, optima);
         } else {

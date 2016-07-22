@@ -27,6 +27,17 @@ namespace upose {
 
     void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel);
 
+    class Human {
+        public:
+            Human(cv::Mat _foreground, cv::Mat _skinRegions, Features2D _projected) :
+                                        foreground(_foreground),
+                                        skinRegions(_skinRegions),
+                                        projected(_projected) { };
+
+            cv::Mat foreground, skinRegions;
+            Features2D projected;
+    };
+
     class Context {
         public:
             Context(cv::VideoCapture& camera);
