@@ -229,7 +229,7 @@ namespace upose {
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
 
-            for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); i += sizeof(int)) {
+            for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
                 m_skeleton[i] = 1;
             }
         }
