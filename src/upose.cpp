@@ -203,6 +203,13 @@ namespace upose {
             costAccumulator += costX*costX + costY*costY;
         }
 
+        /* evaluate edge cost */
+
+        cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size, CV_8U);
+        cv::line(modelOutline, jointPoint(skel, JOINT_ELBOWL), jointPoint(skel, JOINT_HANDL));
+
+        costAccumulator -= cv::sum(human->edgeImage & modelOutline)
+
         return costAccumulator;
     }
 
@@ -221,7 +228,7 @@ namespace upose {
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
-            Human human(foreground, skin, m_last2D);
+            Human human(foreground, skin, m_last2D, edgeImage);
 
             optimizeRandomSearch(costFunction3D, sizeof(m_skeleton) / sizeof(int), 500, 30, m_skeleton, (void*) &human);
 
@@ -243,5 +250,7 @@ namespace upose {
         cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
         cv::circle(image, jointPoint(skel, JOINT_HANDR), 25, cv::Scalar(255, 0, 0), -1);
         cv::circle(image, jointPoint(skel, JOINT_HEAD), 25, cv::Scalar(0, 255, 0), -1);
+        cv::circle(image, jointPoint(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 255, 255), -1);
+        cv::circle(image, jointPoint(skel, JOINT_ELBOWR), 25, cv::Scalar(0, 255, 255), -1);
     }
 }
