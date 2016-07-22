@@ -181,8 +181,9 @@ namespace upose {
 
         /* stub */
 
-        int lhandCostX = (skel[JOINT_HANDL + 0] - human->projected.leftHand.x);
-        int lhandCostY = (skel[JOINT_HANDL + 1] - human->projected.leftHand.y);
+        printf("%d: \n", human->projected.leftHand.x);
+        int lhandCostX = (projectJoint(skel, JOINT_HANDL, 0) - human->projected.leftHand.x);
+        int lhandCostY = (projectJoint(skel, JOINT_HANDL, 1) - human->projected.leftHand.y);
 
         return (lhandCostX * lhandCostX) + (lhandCostY * lhandCostY);
     }
@@ -219,5 +220,7 @@ namespace upose {
 
     void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
         cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
+        cv::circle(image, jointPoint(skel, JOINT_HANDR), 25, cv::Scalar(255, 0, 0), -1);
+        cv::circle(image, jointPoint(skel, JOINT_HEAD), 25, cv::Scalar(0, 255, 0), -1);
     }
 }
