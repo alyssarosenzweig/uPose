@@ -40,8 +40,10 @@ namespace upose {
         private:
             cv::VideoCapture& m_camera;
 
-            cv::Mat m_background, m_bgEdges, m_bgSobelX, m_bgSobelY;
+            cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
+
+            cv::Mat m_lastFrame;
 
             cv::Mat skinRegions(cv::Mat frame);
 

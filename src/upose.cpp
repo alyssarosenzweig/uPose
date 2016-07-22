@@ -21,6 +21,8 @@ namespace upose {
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
         m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
+
+        m_lastFrame = m_background;
    }
 
     /**
@@ -29,8 +31,8 @@ namespace upose {
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        cv::Mat foreground = cv::abs(m_background - frame) / frame;
-        cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+        cv::Mat foreground = cv::abs(m_background - frame);
+        cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
 
         return foreground > 0;
     }
@@ -113,40 +115,40 @@ namespace upose {
     }
 
     cv::Mat Context::edges(cv::Mat frame) {
-        cv::Mat temp;
-        cv::cvtColor(frame, temp, CV_BGR2GRAY);
-
-        cv::Mat sx, sy;
-        cv::Sobel(temp, sx, -1, 1, 0, 5);
-        cv::Sobel(temp, sy, -1, 0, 1, 5);
-
-        cv::imshow("SX", sx * 8);
-        cv::imshow("Sy", sy * 8);
-
-        return (sx + sy) > 16;
+        cv::Mat edges;
+        cv::blur(frame, edges, cv::Size(3, 3));
+        cv::Canny(edges, edges, 32, 32 * 2, 3);
+        return edges;
     }
 
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
 
+        cv::Mat visualization = frame.clone();
+        
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
+        cv::Mat edgeImage = edges(frame) & foreground;
+        cv::Mat motion = cv::abs(frame - m_lastFrame);
+        cv::cvtColor(motion, motion, CV_BGR2GRAY);
 
-        cv::Mat edgeImage = edges(frame);
-        cv::imshow("Edges", edgeImage & foreground);
+        cv::imshow("Foreground", foreground);
+        cv::imshow("Motion Edges", edgeImage);
 
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
-            cv::circle(frame, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
-            cv::circle(frame, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
-            cv::circle(frame, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
+            cv::circle(visualization, m_last2D.face, 10, cv::Scalar(0, 255, 0), -1);
+            cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
+            cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
         }
 
-        cv::imshow("Frame", frame);
+        cv::imshow("visualization", visualization);
+
+        m_lastFrame = frame.clone();
     }
 
     void Skeleton::visualize(cv::Mat image) {
