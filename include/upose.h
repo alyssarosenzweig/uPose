@@ -29,11 +29,11 @@ namespace upose {
 
     class Human {
         public:
-            Human(cv::Mat _foreground, cv::Mat _skinRegions, Features2D _projected, cv::Mat _edgeImage) :
+            Human(cv::Mat _foreground, cv::Mat _skinRegions, cv::Mat _edgeImage, Features2D _projected) :
                                         foreground(_foreground),
                                         skinRegions(_skinRegions),
-                                        projected(_projected)
-                                        edgeImage(_edgeImage) {}
+                                        edgeImage(_edgeImage),
+                                        projected(_projected) {}
 
             cv::Mat foreground, skinRegions, edgeImage;
             Features2D projected;
