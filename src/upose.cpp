@@ -12,6 +12,44 @@
 
 namespace upose {
     /**
+     * implements a crude, random search to optimize a function
+     * TODO: switch to an advanced optimization algorithm
+     */
+
+    void optimizeRandomSearch(
+            int (*cost)(int*), /* cost function to minimize */
+            int dimension, /* dimension of cost function */
+            int iterationCount, /* number of iterations to run */
+            int radius, /* radius of hypersphere */
+            int* optimum /* on entry, initial configuration. on exit, minimum */
+        ) {
+        size_t size = sizeof(int) * dimension;
+
+        int* candidate = malloc(size);
+        memcpy(candidate, optimum, size);
+
+        int best = cost(optimum);
+
+        for(int iteration = 0; iteration < iterationCount; ++iteration) {
+            /* step algorithm */
+
+            for(int d = 0; d < dimension; ++d) {
+                candidate[d] = optimum[d] + (rand() % radius);
+            }
+
+            /* save if a better solution */
+            int candidateCost = cost(candidate);
+
+            if(candidateCost < best) {
+                memcpy(optimum, candidate, size);
+                best = candidateCost;
+            }
+        }
+
+        free(candidate);
+    }
+
+    /**
      * Context class: maintains a skeletal tracking context
      * the constructor initializes background subtraction, 2d tracking
      */
@@ -170,6 +208,4 @@ namespace upose {
         cv::circle(image, lshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
         cv::circle(image, rshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
     }
-
-    void optimizeDownhillSimplex(double* points, int dimension, 
 }
