@@ -160,9 +160,12 @@ namespace upose {
         return edges;
     }
 
-    int costFunction3D(int points[2]) {
+    int costFunction3D(UpperBodySkeleton skel) {
         /* stub */
-        return ((points[0] - 150) * (points[0] - 150)) + ((points[1] - 10) * (points[1] - 10));
+
+        int lhandCost = skel[JOINT_HANDL + 0] - 100;
+
+        return lhandCost * lhandCost;
     }
 
     void Context::step() {
@@ -187,10 +190,10 @@ namespace upose {
             cv::circle(visualization, m_last2D.leftHand, 10, cv::Scalar(255, 0, 0), -1);
             cv::circle(visualization, m_last2D.rightHand, 10, cv::Scalar(0, 0, 255), -1);
 
-            int optima[] = { 0, 0 };
-            optimizeRandomSearch(costFunction3D, 2, 400, 10, optima);
+            UpperBodySkeleton optima;
+            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 400, 10, optima);
 
-            cv::circle(visualization, cv::Point(optima[0], optima[1]), 10, cv::Scalar(255, 255, 255), -1);
+            visualizeUpperSkeleton(visualization, optima);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
         }
@@ -200,10 +203,9 @@ namespace upose {
         m_lastFrame = frame.clone();
     }
 
-    void Skeleton::visualize(cv::Mat image) {
-        cv::circle(image, head2d(), 25, cv::Scalar(255, 0, 0), -1);
-        cv::circle(image, neck2d(), 25, cv::Scalar(255, 255, 255), 5);
-        cv::circle(image, lshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
-        cv::circle(image, rshoulder2d(), 25, cv::Scalar(0, 0, 255), -1);
+    void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
+        cv::Point handl = cv::Point(skel[JOINT_HANDL + 0], skel[JOINT_HANDL + 1]);
+
+        cv::circle(image, handl, 25, cv::Scalar(0, 0, 255), -1);
     }
 }

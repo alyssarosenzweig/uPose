@@ -1,4 +1,5 @@
-/** upose.h
+/** 
+ * upose.h
  * header file for uPose
  *
  * Copyright (C) 2016 Alyssa Rosenzweig
@@ -8,28 +9,23 @@
 #include <opencv2/opencv.hpp>
 
 namespace upose {
-    class Skeleton {
-        public:
-            cv::Point head;
-
-            cv::Point neck, lshoulder, rshoulder;
-
-            void visualize(cv::Mat image);
-
-            cv::Point head2d() { return head; }
-            cv::Point neck2d() { return neck; }
-            cv::Point lshoulder2d() { return lshoulder; }
-            cv::Point rshoulder2d() { return rshoulder; }
-
-            cv::Vec2i neckD() { return neck - head; }
-            cv::Vec2i lshoulderD() { return lshoulder - neck; }
-            cv::Vec2i rshoulderD() { return rshoulder - neck; }
+    struct Features2D {
+        cv::Point face, leftHand, rightHand, leftFoot, rightFoot;
     };
 
-    class Features2D {
-        public:
-            cv::Point face, leftHand, rightHand, leftFoot, rightFoot;
+    typedef int UpperBodySkeleton[3 * 7];
+
+    enum Skeleton {
+        JOINT_HEAD = 0,
+        JOINT_SHOULDERL = 3,
+        JOINT_SHOULDERR = 6,
+        JOINT_ELBOWL = 9,
+        JOINT_ELBOWR = 12,
+        JOINT_HANDL = 15,
+        JOINT_HANDR = 18
     };
+
+    void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel);
 
     class Context {
         public:
