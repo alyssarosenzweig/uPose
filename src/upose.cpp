@@ -185,12 +185,25 @@ namespace upose {
     int costFunction3D(UpperBodySkeleton skel, void* humanPtr) {
         Human* human = (Human*) humanPtr;
 
-        /* stub */
+        int costAccumulator = 0;
 
-        int lhandCostX = (projectJoint(skel, JOINT_HANDL, 0) - human->projected.leftHand.x);
-        int lhandCostY = (projectJoint(skel, JOINT_HANDL, 1) - human->projected.leftHand.y);
+        /* evaluate cost for known joints */
+        int knownJoints[] = {JOINT_HEAD, JOINT_HANDL, JOINT_HANDR};
 
-        return (lhandCostX * lhandCostX) + (lhandCostY * lhandCostY);
+        cv::Point knownPos[] = {
+            human->projected.face,
+            human->projected.leftHand,
+            human->projected.rightHand
+        };
+        
+        for(unsigned int i = 0; i < 3; ++i) {
+            int costX = projectJoint(skel, knownJoints[i], 0) - knownPos[i].x,
+                costY = projectJoint(skel, knownJoints[i], 1) - knownPos[i].y;
+
+            costAccumulator += costX*costX + costY*costY;
+        }
+
+        return costAccumulator;
     }
 
     void Context::step() {
@@ -210,7 +223,7 @@ namespace upose {
 
             Human human(foreground, skin, m_last2D);
 
-            optimizeRandomSearch(costFunction3D, sizeof(m_skeleton) / sizeof(int), 2000, 30, m_skeleton, (void*) &human);
+            optimizeRandomSearch(costFunction3D, sizeof(m_skeleton) / sizeof(int), 500, 30, m_skeleton, (void*) &human);
 
             visualizeUpperSkeleton(visualization, m_skeleton);
         } else {
@@ -227,7 +240,6 @@ namespace upose {
     }
 
     void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
-        printf("%d\n", jointPoint(skel, JOINT_HANDL).x);
         cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
         cv::circle(image, jointPoint(skel, JOINT_HANDR), 25, cv::Scalar(255, 0, 0), -1);
         cv::circle(image, jointPoint(skel, JOINT_HEAD), 25, cv::Scalar(0, 255, 0), -1);
