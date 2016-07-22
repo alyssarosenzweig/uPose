@@ -33,8 +33,14 @@ namespace upose {
 
         for(int iteration = 0; iteration < iterationCount; ++iteration) {
             /* step algorithm */
-            int dim = iteration % dimension;
-            candidate[dim] = optimum[dim] + (rand() % radius);
+            int dim = iteration % dimension,
+                change = (rand() % (2*radius)) - radius;
+
+            if(optimum[dim] + change < 1) {
+                continue;
+            }
+
+            candidate[dim] = optimum[dim] + change;
 
             /* save if a better solution */
             int candidateCost = cost(candidate, context);
@@ -181,7 +187,6 @@ namespace upose {
 
         /* stub */
 
-        printf("%d: \n", human->projected.leftHand.x);
         int lhandCostX = (projectJoint(skel, JOINT_HANDL, 0) - human->projected.leftHand.x);
         int lhandCostY = (projectJoint(skel, JOINT_HANDL, 1) - human->projected.leftHand.y);
 
@@ -206,7 +211,12 @@ namespace upose {
             Human human(foreground, skin, m_last2D);
 
             UpperBodySkeleton optima;
-            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 800, 30, optima, (void*) &human);
+
+            for(unsigned int i = 0; i < sizeof(optima) / sizeof(int); i += sizeof(int)) {
+                optima[i] = 1;
+            }
+
+            optimizeRandomSearch(costFunction3D, sizeof(optima) / sizeof(int), 2000, 30, optima, (void*) &human);
 
             visualizeUpperSkeleton(visualization, optima);
         } else {
@@ -219,6 +229,7 @@ namespace upose {
     }
 
     void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
+        printf("%d\n", jointPoint(skel, JOINT_HANDL).x);
         cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
         cv::circle(image, jointPoint(skel, JOINT_HANDR), 25, cv::Scalar(255, 0, 0), -1);
         cv::circle(image, jointPoint(skel, JOINT_HEAD), 25, cv::Scalar(0, 255, 0), -1);
