@@ -119,6 +119,7 @@ namespace upose {
                     return cv::boundingRect(l).width > cv::boundingRect(r).width;
                  });
 
+        std::vector<cv::Rect> boundings;
         std::vector<cv::Point> centroids;
         std::vector<std::vector<int> > costs;
 
@@ -128,6 +129,7 @@ namespace upose {
                 cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
 
                 centroids.push_back(centroid);
+                boundings.push_back(bounding);
 
                 std::vector<int> cost;
                 cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y);
@@ -145,6 +147,8 @@ namespace upose {
 
             std::vector<int> indices = { -1, -1, -1 };
 
+            /* minimize errors */
+
             for(unsigned int i = 0; i < 3; ++i) {
                 for(unsigned int p = 0; p < 3; ++p) {
                     if(costs[i][p] < minFace[p]) {
@@ -157,6 +161,15 @@ namespace upose {
             if(indices[0] > -1) m_last2D.face      = centroids[indices[0]];
             if(indices[1] > -1) m_last2D.leftHand  = centroids[indices[1]];
             if(indices[2] > -1) m_last2D.rightHand = centroids[indices[2]];
+
+            /* assign shoulder positions relative to face */
+
+            if(indices[0] > -1) {
+                cv::Rect face = boundings[indices[0]];
+
+                m_last2D.leftShoulder = cv::Point(face.x - (face.width / 2), face.y + face.height);
+                m_last2D.rightShoulder = cv::Point(face.x + (3*face.width / 2), face.y + face.height);
+            }
         }
     }
 
@@ -249,7 +262,9 @@ namespace upose {
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel) {
         cv::circle(image, f.leftHand, 25, cv::Scalar(0, 0, 255), -1);
+        cv::circle(image, f.leftShoulder, 25, cv::Scalar(0, 0, 127), -1);
         cv::circle(image, f.rightHand, 25, cv::Scalar(255, 0, 0), -1);
+        cv::circle(image, f.rightShoulder, 25, cv::Scalar(127, 0, 0), -1);
         cv::circle(image, f.face, 25, cv::Scalar(0, 255, 0), -1);
         cv::circle(image, jointPoint2(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 0, 0), -1);
         cv::circle(image, jointPoint2(skel, JOINT_ELBOWR), 25, cv::Scalar(255, 255, 255), -1);
