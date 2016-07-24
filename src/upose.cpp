@@ -193,10 +193,10 @@ namespace upose {
 
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
         cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 10);
-//        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), jointPoint2(skel, JOINT_SHOULDERL), cv::Scalar(255,255,255), 100);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 10);
 
         cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 10);
-//        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), jointPoint2(skel, JOINT_SHOULDERR), cv::Scalar(255,255,255), 100);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 10);
 
         costAccumulator -= cv::countNonZero(human->foreground & modelOutline);
 
@@ -204,10 +204,12 @@ namespace upose {
         cv::imshow("Overlap", human->foreground & modelOutline);
 
         /* bias lengths */
-        int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL));
-        int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR));
+        int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
+                          + cv::norm(human->projected.leftShoulder - jointPoint2(skel, JOINT_ELBOWL));
+        int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
+                           + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += 10000 * (elbowRightBias + elbowLeftBias);
+//        costAccumulator += 50 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -227,9 +229,9 @@ namespace upose {
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
-            //Human human(foreground, skin, edgeImage, m_last2D);
+            Human human(foreground, skin, edgeImage, m_last2D);
 
-            //optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 400, 30, m_skeleton, (void*) &human);
+            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 50, 30, m_skeleton, (void*) &human);
 
             visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         } else {
