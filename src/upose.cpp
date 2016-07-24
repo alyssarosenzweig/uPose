@@ -200,7 +200,7 @@ namespace upose {
         cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 10);
 //        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), jointPoint2(skel, JOINT_SHOULDERR), cv::Scalar(255,255,255), 100);
 
-        costAccumulator -= cv::sum(human->foreground & modelOutline)[0];
+        costAccumulator -= cv::countNonZero(human->foreground & modelOutline);
 
         cv::imshow("Out", modelOutline);
         cv::imshow("Overlap", human->foreground & modelOutline);
@@ -229,9 +229,9 @@ namespace upose {
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
-            Human human(foreground, skin, edgeImage, m_last2D);
+            //Human human(foreground, skin, edgeImage, m_last2D);
 
-            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 400, 30, m_skeleton, (void*) &human);
+            //optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 400, 30, m_skeleton, (void*) &human);
 
             visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         } else {
