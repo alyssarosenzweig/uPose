@@ -180,21 +180,6 @@ namespace upose {
         return edges;
     }
 
-/*    int projectJoint(int* joints, int index, int Y) {
-        int Z = joints[index + 2];
-
-        if(Z == 0 || Z < 0) return 0;
-
-        return joints[index + Y] / joints[index + 2];
-    }
-
-    cv::Point jointPoint(int* joints, int index) {
-        return cv::Point(
-                projectJoint(joints, index, 0),
-                projectJoint(joints, index, 1)
-            );
-    }*/
-
     cv::Point jointPoint2(int* joints, int index) {
         return cv::Point(joints[index], joints[index + 1]);
     }
