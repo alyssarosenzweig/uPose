@@ -194,18 +194,22 @@ namespace upose {
         /* evaluate edge cost */
 
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), jointPoint2(skel, JOINT_SHOULDERL), cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 10);
+//        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), jointPoint2(skel, JOINT_SHOULDERL), cv::Scalar(255,255,255), 100);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), jointPoint2(skel, JOINT_SHOULDERR), cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 10);
+//        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), jointPoint2(skel, JOINT_SHOULDERR), cv::Scalar(255,255,255), 100);
 
         costAccumulator -= cv::sum(human->foreground & modelOutline)[0];
 
+        cv::imshow("Out", modelOutline);
+        cv::imshow("Overlap", human->foreground & modelOutline);
+
         /* bias lengths */
         int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL));
+        int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += elbowLeftBias;
+        costAccumulator += 10000 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -227,7 +231,7 @@ namespace upose {
 
             Human human(foreground, skin, edgeImage, m_last2D);
 
-            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 1000, 30, m_skeleton, (void*) &human);
+            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 400, 30, m_skeleton, (void*) &human);
 
             visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         } else {
@@ -248,8 +252,8 @@ namespace upose {
         cv::circle(image, f.rightHand, 25, cv::Scalar(255, 0, 0), -1);
         cv::circle(image, f.face, 25, cv::Scalar(0, 255, 0), -1);
         cv::circle(image, jointPoint2(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 0, 0), -1);
-        cv::circle(image, jointPoint2(skel, JOINT_ELBOWR), 25, cv::Scalar(0, 255, 255), -1);
-        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERL), 25, cv::Scalar(255, 0, 255), -1);
-        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERR), 25, cv::Scalar(255, 255, 255), -1);
+        cv::circle(image, jointPoint2(skel, JOINT_ELBOWR), 25, cv::Scalar(255, 255, 255), -1);
+//        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERL), 25, cv::Scalar(255, 0, 255), -1);
+//        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERR), 25, cv::Scalar(255, 255, 255), -1);
     }
 }
