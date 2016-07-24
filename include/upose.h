@@ -13,19 +13,16 @@ namespace upose {
         cv::Point face, leftHand, rightHand, leftFoot, rightFoot;
     };
 
-    typedef int UpperBodySkeleton[3 * 7];
+    typedef int UpperBodySkeleton[2 * 7];
 
-    enum Skeleton {
-        JOINT_HEAD = 0,
-        JOINT_SHOULDERL = 3,
-        JOINT_SHOULDERR = 6,
-        JOINT_ELBOWL = 9,
-        JOINT_ELBOWR = 12,
-        JOINT_HANDL = 15,
-        JOINT_HANDR = 18
+    enum Skeleton2D {
+        JOINT_SHOULDERL = 0,
+        JOINT_SHOULDERR = 2,
+        JOINT_ELBOWL = 4,
+        JOINT_ELBOWR = 6,
     };
 
-    void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel);
+    void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel);
 
     class Human {
         public:

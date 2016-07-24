@@ -167,7 +167,7 @@ namespace upose {
         return edges;
     }
 
-    int projectJoint(int* joints, int index, int Y) {
+/*    int projectJoint(int* joints, int index, int Y) {
         int Z = joints[index + 2];
 
         if(Z == 0 || Z < 0) return 0;
@@ -180,36 +180,32 @@ namespace upose {
                 projectJoint(joints, index, 0),
                 projectJoint(joints, index, 1)
             );
+    }*/
+
+    cv::Point jointPoint2(int* joints, int index) {
+        return cv::Point(joints[index], joints[index + 1]);
     }
 
-    int costFunction3D(UpperBodySkeleton skel, void* humanPtr) {
+    int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
         Human* human = (Human*) humanPtr;
 
         int costAccumulator = 0;
 
-        /* evaluate cost for known joints */
-        int knownJoints[] = {JOINT_HEAD, JOINT_HANDL, JOINT_HANDR};
-
-        cv::Point knownPos[] = {
-            human->projected.face,
-            human->projected.leftHand,
-            human->projected.rightHand
-        };
-        
-        for(unsigned int i = 0; i < 3; ++i) {
-            int costX = projectJoint(skel, knownJoints[i], 0) - knownPos[i].x,
-                costY = projectJoint(skel, knownJoints[i], 1) - knownPos[i].y;
-
-            costAccumulator += costX*costX + costY*costY;
-        }
-
         /* evaluate edge cost */
 
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
-        cv::line(modelOutline, jointPoint(skel, JOINT_ELBOWL), jointPoint(skel, JOINT_HANDL), cv::Scalar(256,255,255), 50);
-        cv::line(modelOutline, jointPoint(skel, JOINT_ELBOWR), jointPoint(skel, JOINT_HANDR), cv::Scalar(256,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), jointPoint2(skel, JOINT_SHOULDERL), cv::Scalar(255,255,255), 50);
 
-        costAccumulator -= cv::sum(human->edgeImage & modelOutline)[0] / 2;
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), jointPoint2(skel, JOINT_SHOULDERR), cv::Scalar(255,255,255), 50);
+
+        costAccumulator -= cv::sum(human->foreground & modelOutline)[0];
+
+        /* bias lengths */
+        int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL));
+
+        costAccumulator += elbowLeftBias;
 
         return costAccumulator;
     }
@@ -231,9 +227,9 @@ namespace upose {
 
             Human human(foreground, skin, edgeImage, m_last2D);
 
-            optimizeRandomSearch(costFunction3D, sizeof(m_skeleton) / sizeof(int), 500, 30, m_skeleton, (void*) &human);
+            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 1000, 30, m_skeleton, (void*) &human);
 
-            visualizeUpperSkeleton(visualization, m_skeleton);
+            visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
 
@@ -247,11 +243,13 @@ namespace upose {
         m_lastFrame = frame.clone();
     }
 
-    void visualizeUpperSkeleton(cv::Mat image, UpperBodySkeleton skel) {
-        cv::circle(image, jointPoint(skel, JOINT_HANDL), 25, cv::Scalar(0, 0, 255), -1);
-        cv::circle(image, jointPoint(skel, JOINT_HANDR), 25, cv::Scalar(255, 0, 0), -1);
-        cv::circle(image, jointPoint(skel, JOINT_HEAD), 25, cv::Scalar(0, 255, 0), -1);
-        cv::circle(image, jointPoint(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 0, 0), -1);
-        cv::circle(image, jointPoint(skel, JOINT_ELBOWR), 25, cv::Scalar(255, 255, 255), -1);
+    void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel) {
+        cv::circle(image, f.leftHand, 25, cv::Scalar(0, 0, 255), -1);
+        cv::circle(image, f.rightHand, 25, cv::Scalar(255, 0, 0), -1);
+        cv::circle(image, f.face, 25, cv::Scalar(0, 255, 0), -1);
+        cv::circle(image, jointPoint2(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 0, 0), -1);
+        cv::circle(image, jointPoint2(skel, JOINT_ELBOWR), 25, cv::Scalar(0, 255, 255), -1);
+        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERL), 25, cv::Scalar(255, 0, 255), -1);
+        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERR), 25, cv::Scalar(255, 255, 255), -1);
     }
 }
