@@ -15,13 +15,11 @@ namespace upose {
         cv::Point leftFoot, rightFoot;
     };
 
-    typedef int UpperBodySkeleton[2 * 7];
+    typedef int UpperBodySkeleton[2 * 2];
 
     enum Skeleton2D {
-        JOINT_SHOULDERL = 0,
-        JOINT_SHOULDERR = 2,
-        JOINT_ELBOWL = 4,
-        JOINT_ELBOWR = 6,
+        JOINT_ELBOWL = 0,
+        JOINT_ELBOWR = 2,
     };
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel);

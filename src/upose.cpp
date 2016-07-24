@@ -61,7 +61,8 @@ namespace upose {
      * the constructor initializes background subtraction, 2d tracking
      */
 
-    Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
+    Context::Context(cv::VideoCapture& camera) : m_camera(camera),
+                                                 m_initiated(false) {
         m_camera.read(m_background);
 
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
@@ -200,16 +201,13 @@ namespace upose {
 
         costAccumulator -= cv::countNonZero(human->foreground & modelOutline);
 
-        cv::imshow("Out", modelOutline);
-        cv::imshow("Overlap", human->foreground & modelOutline);
-
         /* bias lengths */
         int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
                           + cv::norm(human->projected.leftShoulder - jointPoint2(skel, JOINT_ELBOWL));
         int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
                            + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-//        costAccumulator += 50 * (elbowRightBias + elbowLeftBias);
+        costAccumulator += 20 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -225,20 +223,22 @@ namespace upose {
         cv::Mat edgeImage = edges(frame) & foreground;
         cv::Mat motion = cv::abs(frame - m_lastFrame);
         cv::cvtColor(motion, motion, CV_BGR2GRAY);
-
+        
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
             Human human(foreground, skin, edgeImage, m_last2D);
 
-            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 50, 30, m_skeleton, (void*) &human);
+            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
 
             visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         } else {
             m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
 
-            for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
-                m_skeleton[i] = 1;
+            if(m_initiated) {
+                for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
+                    m_skeleton[i] = 1;
+                }
             }
         }
 

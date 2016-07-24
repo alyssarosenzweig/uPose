@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     upose::Context context(camera);
 
     time_t timer = time(0);
-    unsigned int count;
+    unsigned int count = 0;
 
     for(;;) {
         (void) context.step();
