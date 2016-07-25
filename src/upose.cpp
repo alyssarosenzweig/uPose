@@ -194,11 +194,11 @@ namespace upose {
         /* draw the model outline */
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 25);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 25);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 25);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 25);
 
         /* reward outline */
         costAccumulator -= cv::countNonZero(human->edgeImage & modelOutline);
