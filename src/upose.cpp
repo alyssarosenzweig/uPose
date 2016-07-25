@@ -21,8 +21,8 @@ namespace upose {
             int dimension, /* dimension of cost function */
             int iterationCount, /* number of iterations to run */
             int radius, /* radius of hypersphere */
-            int* optimum, /* on entry, initial configuration. on exit, minimum */
-            void* context /* (read-only) data to be passed to the cost function */
+            int* optimum, /* on entry, initial guess. on exit, minimum */
+            void* context /* pointer passed to the cost function */
         ) {
         size_t size = sizeof(int) * dimension;
 
@@ -59,14 +59,9 @@ namespace upose {
 
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
-
-        m_last2D.face = cv::Point(m_background.cols / 2, 0);
-        m_last2D.leftHand = cv::Point(0, m_background.rows / 2);
-        m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
-
         m_lastFrame = m_background;
 
-        for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
+        for(unsigned int i = 0; i < countof(m_skeleton); ++i) {
             m_skeleton[i] = 0;
         }
    }
@@ -102,6 +97,10 @@ namespace upose {
      * that is, the face, the hands, and the feet
      */
 
+    bool compareWidth(std::vector<cv::Point> l, std::vector<cv::Point> r) {
+        return cv::boundingRect(l).width > cv::boundingRect(r).width;
+    }
+
     void Context::track2DFeatures(cv::Mat foreground, cv::Mat skin) {
         cv::Mat tracked = foreground & skin;
 
@@ -112,12 +111,7 @@ namespace upose {
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-        
-        std::sort(contours.begin(),
-                 contours.end(),
-                 [](std::vector<cv::Point> l, std::vector<cv::Point> r) {
-                    return cv::boundingRect(l).width > cv::boundingRect(r).width;
-                 });
+        std::sort(contours.begin(), contours.end(), compareWidth);
 
         std::vector<cv::Rect> boundings;
         std::vector<cv::Point> centroids;
@@ -185,6 +179,9 @@ namespace upose {
     cv::Mat Context::edgeMotion(cv::Mat frame, cv::Mat edgeImage) {
         cv::Mat motion = cv::abs(frame - m_lastFrame);
         cv::cvtColor(motion, motion, CV_BGR2GRAY);
+
+        m_lastFrame = frame.clone();
+
         return motion & edgeImage;
     }
 
@@ -198,8 +195,9 @@ namespace upose {
         int cost = 0;
 
         for(unsigned int i = 0; i < count; i += 2) {
-            cv::line(outline, lines[i], lines[i + 1], cv::Scalar(255,255,255), 50);
-            cost += cv::norm(lines[i] - lines[i + 1]);
+            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 50);
+
+            cost += cv::norm(lines[i] - lines[i+1]);
         }
 
         return cost;
@@ -244,23 +242,28 @@ namespace upose {
         track2DFeatures(foreground, skin);
 
         Human human(foreground, skin, edgeImage, motion, m_last2D);
-        optimizeRandomSearch(costFunction2D, countof(m_skeleton), 100, 25, m_skeleton, (void*) &human);
+
+        optimizeRandomSearch(costFunction2D,
+                             countof(m_skeleton),
+                             100, 25,
+                             m_skeleton,
+                             (void*) &human);
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         cv::imshow("visualization", visualization);
-
-        m_lastFrame = frame.clone();
     }
 
-    void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel) {
-        cv::line(image, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), cv::Scalar(255, 0, 0), 10);
-        cv::line(image, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, cv::Scalar(255, 0, 0), 10);
-        cv::line(image, f.leftShoulder, f.neck, cv::Scalar(255, 0, 0), 10);
+    void visualizeUpperSkeleton(cv::Mat out, Features2D f, UpperBodySkeleton skel) {
+        cv::Scalar c(255, 0, 0);
 
-        cv::line(image, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), cv::Scalar(255, 0, 0), 10);
-        cv::line(image, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, cv::Scalar(255, 0, 0), 10);
-        cv::line(image, f.rightShoulder, f.neck, cv::Scalar(255, 0, 0), 10);
+        cv::line(out, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), c, 10);
+        cv::line(out, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, c, 10);
+        cv::line(out, f.leftShoulder, f.neck, c, 10);
 
-        cv::line(image, f.neck, f.face, cv::Scalar(255, 0, 0), 10);
+        cv::line(out, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), c, 10);
+        cv::line(out, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, c, 10);
+        cv::line(out, f.rightShoulder, f.neck, c, 10);
+
+        cv::line(out, f.neck, f.face, c, 10);
     }
 }
