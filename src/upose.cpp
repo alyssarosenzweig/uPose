@@ -166,10 +166,12 @@ namespace upose {
             /* assign shoulder positions relative to face */
 
             if(indices[0] > -1) {
-                cv::Rect face = boundings[indices[0]];
+                cv::Rect face = boundings[indices[0]],
+                         neck = face + cv::Point(0, 2*face.width);
 
-                m_last2D.leftShoulder = cv::Point(face.x - (face.width / 2), face.y + (2*face.width));
-                m_last2D.rightShoulder = cv::Point(face.x + (3*face.width / 2), face.y + (2*face.width));
+                m_last2D.neck = neck;
+                m_last2D.leftShoulder = neck + cv::Point(-face.width / 2, 0);
+                m_last2D.rightShoulder = neck + cv::Point(3*face.width / 2, 0);
             }
         }
     }
