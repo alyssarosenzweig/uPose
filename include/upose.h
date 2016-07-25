@@ -10,7 +10,8 @@
 
 namespace upose {
     struct Features2D {
-        cv::Point face, leftShoulder, rightShoulder;
+        cv::Point face;
+        cv::Point neck, leftShoulder, rightShoulder;
         cv::Point leftHand, rightHand;
         cv::Point leftFoot, rightFoot;
     };

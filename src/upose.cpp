@@ -166,8 +166,8 @@ namespace upose {
             /* assign shoulder positions relative to face */
 
             if(indices[0] > -1) {
-                cv::Rect face = boundings[indices[0]],
-                         neck = face + cv::Point(0, 2*face.width);
+                cv::Rect face = boundings[indices[0]];
+                cv::Point neck = cv::Point(face.x, face.y + 2*face.width);
 
                 m_last2D.neck = neck;
                 m_last2D.leftShoulder = neck + cv::Point(-face.width / 2, 0);
@@ -251,10 +251,13 @@ namespace upose {
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel) {
         cv::line(image, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), cv::Scalar(255, 0, 0), 10);
-        cv::line(image, f.leftShoulder, f.face, cv::Scalar(255, 0, 0), 10);
-        cv::line(image, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), cv::Scalar(255, 0, 0), 10);
-        cv::line(image, f.rightShoulder, f.face, cv::Scalar(255, 0, 0), 10);
         cv::line(image, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, cv::Scalar(255, 0, 0), 10);
+        cv::line(image, f.leftShoulder, f.neck, cv::Scalar(255, 0, 0), 10);
+
+        cv::line(image, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), cv::Scalar(255, 0, 0), 10);
         cv::line(image, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, cv::Scalar(255, 0, 0), 10);
+        cv::line(image, f.rightShoulder, f.neck, cv::Scalar(255, 0, 0), 10);
+
+        cv::line(image, f.neck, f.face, cv::Scalar(255, 0, 0), 10);
     }
 }
