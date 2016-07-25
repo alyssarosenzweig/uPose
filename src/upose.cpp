@@ -248,14 +248,11 @@ namespace upose {
     }
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f, UpperBodySkeleton skel) {
-        cv::circle(image, f.leftHand, 25, cv::Scalar(0, 0, 255), -1);
-        cv::circle(image, f.leftShoulder, 25, cv::Scalar(0, 0, 127), -1);
-        cv::circle(image, f.rightHand, 25, cv::Scalar(255, 0, 0), -1);
-        cv::circle(image, f.rightShoulder, 25, cv::Scalar(127, 0, 0), -1);
-        cv::circle(image, f.face, 25, cv::Scalar(0, 255, 0), -1);
-        cv::circle(image, jointPoint2(skel, JOINT_ELBOWL), 25, cv::Scalar(0, 0, 0), -1);
-        cv::circle(image, jointPoint2(skel, JOINT_ELBOWR), 25, cv::Scalar(255, 255, 255), -1);
-//        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERL), 25, cv::Scalar(255, 0, 255), -1);
-//        cv::circle(image, jointPoint2(skel, JOINT_SHOULDERR), 25, cv::Scalar(255, 255, 255), -1);
+        cv::line(image, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), cv::Scalar(255, 0, 0), 10);
+        cv::line(image, f.leftShoulder, f.face, cv::Scalar(255, 0, 0), 10);
+        cv::line(image, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), cv::Scalar(255, 0, 0), 10);
+        cv::line(image, f.rightShoulder, f.face, cv::Scalar(255, 0, 0), 10);
+        cv::line(image, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, cv::Scalar(255, 0, 0), 10);
+        cv::line(image, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, cv::Scalar(255, 0, 0), 10);
     }
 }
