@@ -194,14 +194,17 @@ namespace upose {
         /* draw the model outline */
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 25);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 25);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 50);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 25);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 25);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 50);
 
         /* reward outline */
         costAccumulator -= cv::countNonZero(human->edgeImage & modelOutline);
+
+        /* reward foreground */
+        costAccumulator -= cv::countNonZero(human->foreground & modelOutline) / 16;
 
         /* bias lengths */
         int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
@@ -209,7 +212,7 @@ namespace upose {
         int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
                            + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += 3 * (elbowRightBias + elbowLeftBias);
+        costAccumulator += 4 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -223,6 +226,8 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
         cv::Mat edgeImage = edges(frame) & foreground;
+
+        cv::imshow("SK", skin & foreground);
 
         track2DFeatures(foreground, skin);
 
