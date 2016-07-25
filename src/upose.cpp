@@ -192,16 +192,17 @@ namespace upose {
 
         int costAccumulator = 0;
 
-        /* evaluate edge cost */
-
+        /* draw the model outline */
         cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 10);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 10);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 10);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 10);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 50);
 
-        costAccumulator -= cv::countNonZero(human->foreground & modelOutline);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
+        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 50);
+
+        /* reward outline */
+        costAccumulator -= cv::countNonZero(human->edgeImage & modelOutline);
 
         /* bias lengths */
         int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
@@ -209,7 +210,7 @@ namespace upose {
         int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
                            + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += 20 * (elbowRightBias + elbowLeftBias);
+        costAccumulator += 2 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -225,7 +226,7 @@ namespace upose {
         cv::Mat edgeImage = edges(frame) & foreground;
         cv::Mat motion = cv::abs(frame - m_lastFrame);
         cv::cvtColor(motion, motion, CV_BGR2GRAY);
-        
+
         if(m_initiated) {
             track2DFeatures(foreground, skin);
 
