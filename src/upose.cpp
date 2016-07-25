@@ -239,7 +239,7 @@ namespace upose {
         track2DFeatures(foreground, skin);
 
         Human human(foreground, skin, edgeImage, motion & edgeImage, m_last2D);
-        optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
+        optimizeRandomSearch(costFunction2D, countof(m_skeleton), 100, 25, m_skeleton, (void*) &human);
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         cv::imshow("visualization", visualization);
