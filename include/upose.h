@@ -49,14 +49,11 @@ namespace upose {
         private:
             cv::VideoCapture& m_camera;
 
-            cv::Mat m_background;
+            cv::Mat m_background, m_lastFrame;
             cv::Mat backgroundSubtract(cv::Mat frame);
-
-            cv::Mat m_lastFrame;
-
             cv::Mat skinRegions(cv::Mat frame);
-
-            cv::Mat edges(cv::Mat frame);
+            cv::Mat edges(cv::Mat frame, cv::Mat foreground);
+            cv::Mat edgeMotion(cv::Mat frame, cv::Mat edges);
 
             Features2D m_last2D;
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);

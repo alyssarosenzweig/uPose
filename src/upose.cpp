@@ -175,11 +175,17 @@ namespace upose {
         }
     }
 
-    cv::Mat Context::edges(cv::Mat frame) {
+    cv::Mat Context::edges(cv::Mat frame, cv::Mat foreground) {
         cv::Mat edges;
         cv::blur(frame, edges, cv::Size(3, 3));
         cv::Canny(edges, edges, 32, 32 * 2, 3);
-        return edges;
+        return edges & foreground;
+    }
+
+    cv::Mat Context::edgeMotion(cv::Mat frame, cv::Mat edgeImage) {
+        cv::Mat motion = cv::abs(frame - m_lastFrame);
+        cv::cvtColor(motion, motion, CV_BGR2GRAY);
+        return motion & edgeImage;
     }
 
     cv::Point jointPoint2(int* joints, int index) {
@@ -214,7 +220,7 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
         };
 
-        int cost = drawModelOutline(model, skeleton, COUNT(skeleton));
+        int cost = drawModelOutline(model, skeleton, countof(skeleton));
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
@@ -232,13 +238,12 @@ namespace upose {
         
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
-        cv::Mat edgeImage = edges(frame) & foreground;
-        cv::Mat motion = cv::abs(m_lastFrame - frame);
-        cv::cvtColor(motion, motion, CV_BGR2GRAY);
+        cv::Mat edgeImage = edges(frame, foreground);
+        cv::Mat motion = edgeMotion(frame, edgeImage);
 
         track2DFeatures(foreground, skin);
 
-        Human human(foreground, skin, edgeImage, motion & edgeImage, m_last2D);
+        Human human(foreground, skin, edgeImage, motion, m_last2D);
         optimizeRandomSearch(costFunction2D, countof(m_skeleton), 100, 25, m_skeleton, (void*) &human);
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
