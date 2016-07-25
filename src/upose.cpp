@@ -36,10 +36,6 @@ namespace upose {
             int dim = iteration % dimension,
                 change = (rand() % (2*radius)) - radius;
 
-            if(optimum[dim] + change < 1) {
-                continue;
-            }
-
             candidate[dim] = optimum[dim] + change;
 
             /* save if a better solution */
@@ -227,19 +223,13 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
         cv::Mat edgeImage = edges(frame) & foreground;
-        cv::Mat motion = cv::abs(frame - m_lastFrame);
-        cv::cvtColor(motion, motion, CV_BGR2GRAY);
 
         track2DFeatures(foreground, skin);
 
         Human human(foreground, skin, edgeImage, m_last2D);
-
         optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
-                            }
-        }
-
         cv::imshow("visualization", visualization);
 
         m_lastFrame = frame.clone();
