@@ -205,13 +205,7 @@ namespace upose {
         return cost;
     }
 
-    int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
-        Human* human = (Human*) humanPtr;
-
-        /* draw the model outline with cost*/
-
-        cv::Mat model = cv::Mat::zeros(human->foreground.size(), CV_8U);
-
+    int upperBodyOutline(UpperBodySkeleton skel, Human* human) {
         cv::Point skeleton[] = {
             human->projected.leftHand, jointPoint2(skel, JOINT_ELBOWL),
             jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder,
@@ -220,7 +214,17 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
         };
 
-        int cost = 15 * drawModelOutline(model, skeleton, countof(skeleton));
+        return 15 * drawModelOutline(model, skeleton, countof(skeleton));
+    }
+
+    int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
+        Human* human = (Human*) humanPtr;
+
+        /* draw the model outline with cost*/
+
+        cv::Mat model = cv::Mat::zeros(human->foreground.size(), CV_8U);
+
+        int cost = upperBodyOutline(skel, human);
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
