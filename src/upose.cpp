@@ -220,12 +220,12 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
         };
 
-        int cost = 8 * drawModelOutline(model, skeleton, countof(skeleton));
+        int cost = 15 * drawModelOutline(model, skeleton, countof(skeleton));
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
         cost -= cv::countNonZero(human->foreground & model) / 32;
-        cost -= cv::countNonZero(human->motion & model) * 2;
+        cost -= cv::countNonZero(human->motion & model) * 4;
 
         return cost;
     }
@@ -247,7 +247,7 @@ namespace upose {
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
-                             10, 200,
+                             10, 50,
                              m_skeleton,
                              (void*) &human);
 
