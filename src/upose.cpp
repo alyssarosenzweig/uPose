@@ -209,7 +209,7 @@ namespace upose {
         int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
                            + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += 2 * (elbowRightBias + elbowLeftBias);
+        costAccumulator += 3 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
