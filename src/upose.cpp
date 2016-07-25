@@ -89,7 +89,9 @@ namespace upose {
         cv::Mat bgr[3];
         cv::split(frame, bgr);
 
-        return (0.596*bgr[2]) - (0.274*bgr[1]) - (0.322*bgr[0]) > 2;
+        cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[2]);
+
+        return (map > 2) & (map < 8);
     }
 
     /**
@@ -245,7 +247,7 @@ namespace upose {
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
-                             100, 25,
+                             10, 200,
                              m_skeleton,
                              (void*) &human);
 
@@ -254,16 +256,17 @@ namespace upose {
     }
 
     void visualizeUpperSkeleton(cv::Mat out, Features2D f, UpperBodySkeleton skel) {
-        cv::Scalar c(255, 0, 0);
+        cv::Scalar c(0, 200, 0); /* color */
+        int t = 5; /* line thickness */
 
-        cv::line(out, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), c, 10);
-        cv::line(out, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, c, 10);
-        cv::line(out, f.leftShoulder, f.neck, c, 10);
+        cv::line(out, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), c, t);
+        cv::line(out, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, c, t);
+        cv::line(out, f.leftShoulder, f.neck, c, t);
 
-        cv::line(out, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), c, 10);
-        cv::line(out, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, c, 10);
-        cv::line(out, f.rightShoulder, f.neck, c, 10);
+        cv::line(out, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), c, t);
+        cv::line(out, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, c, t);
+        cv::line(out, f.rightShoulder, f.neck, c, t);
 
-        cv::line(out, f.neck, f.face, c, 10);
+        cv::line(out, f.neck, f.face, c, t);
     }
 }
