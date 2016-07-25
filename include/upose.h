@@ -59,7 +59,5 @@ namespace upose {
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);
 
             UpperBodySkeleton m_skeleton;
-
-            bool m_initiated;
     };
 }

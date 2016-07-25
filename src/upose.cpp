@@ -61,8 +61,7 @@ namespace upose {
      * the constructor initializes background subtraction, 2d tracking
      */
 
-    Context::Context(cv::VideoCapture& camera) : m_camera(camera),
-                                                 m_initiated(false) {
+    Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
 
         m_last2D.face = cv::Point(m_background.cols / 2, 0);
@@ -70,6 +69,10 @@ namespace upose {
         m_last2D.rightHand = cv::Point(m_background.cols, m_background.rows / 2);
 
         m_lastFrame = m_background;
+
+        for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
+            m_skeleton[i] = 0;
+        }
    }
 
     /**
@@ -227,22 +230,14 @@ namespace upose {
         cv::Mat motion = cv::abs(frame - m_lastFrame);
         cv::cvtColor(motion, motion, CV_BGR2GRAY);
 
-        if(m_initiated) {
-            track2DFeatures(foreground, skin);
+        track2DFeatures(foreground, skin);
 
-            Human human(foreground, skin, edgeImage, m_last2D);
+        Human human(foreground, skin, edgeImage, m_last2D);
 
-            optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
+        optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
 
-            visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
-        } else {
-            m_initiated = foreground.at<char>(foreground.cols/2, foreground.rows/2);
-
-            if(m_initiated) {
-                for(unsigned int i = 0; i < sizeof(m_skeleton) / sizeof(int); ++i) {
-                    m_skeleton[i] = 1;
-                }
-            }
+        visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
+                            }
         }
 
         cv::imshow("visualization", visualization);
