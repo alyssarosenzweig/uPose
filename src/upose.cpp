@@ -220,11 +220,11 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
         };
 
-        int cost = 16 * drawModelOutline(model, skeleton, countof(skeleton));
+        int cost = 8 * drawModelOutline(model, skeleton, countof(skeleton));
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
-        cost -= cv::countNonZero(human->foreground & model) / 16;
+        cost -= cv::countNonZero(human->foreground & model) / 32;
         cost -= cv::countNonZero(human->motion & model) * 2;
 
         return cost;
