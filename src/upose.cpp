@@ -206,13 +206,16 @@ namespace upose {
         /* reward foreground */
         costAccumulator -= cv::countNonZero(human->foreground & modelOutline) / 16;
 
+        /* reward motion outline */
+        costAccumulator -= cv::countNonZero(human->motion & modelOutline) * 2;
+
         /* bias lengths */
         int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
                           + cv::norm(human->projected.leftShoulder - jointPoint2(skel, JOINT_ELBOWL));
         int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
                            + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
 
-        costAccumulator += 4 * (elbowRightBias + elbowLeftBias);
+        costAccumulator += 10 * (elbowRightBias + elbowLeftBias);
 
         return costAccumulator;
     }
@@ -226,12 +229,12 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
         cv::Mat edgeImage = edges(frame) & foreground;
-
-        cv::imshow("SK", skin & foreground);
+        cv::Mat motion = cv::abs(m_lastFrame - frame);
+        cv::cvtColor(motion, motion, CV_BGR2GRAY);
 
         track2DFeatures(foreground, skin);
 
-        Human human(foreground, skin, edgeImage, m_last2D);
+        Human human(foreground, skin, edgeImage, motion & edgeImage, m_last2D);
         optimizeRandomSearch(costFunction2D, sizeof(m_skeleton) / sizeof(int), 100, 25, m_skeleton, (void*) &human);
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
