@@ -186,38 +186,42 @@ namespace upose {
         return cv::Point(joints[index], joints[index + 1]);
     }
 
+    /* given a list of connected points, draw the outline and compute cost */
+
+    int drawModelOutline(cv::Mat outline, cv::Point* lines, size_t count) {
+        int cost = 0;
+
+        for(unsigned int i = 0; i < count; i += 2) {
+            cv::line(outline, lines[i], lines[i + 1], cv::Scalar(255,255,255), 50);
+            cost += cv::norm(lines[i] - lines[i + 1]);
+        }
+
+        return cost;
+    }
+
     int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
         Human* human = (Human*) humanPtr;
 
-        int costAccumulator = 0;
+        /* draw the model outline with cost*/
 
-        /* draw the model outline */
-        cv::Mat modelOutline = cv::Mat::zeros(human->foreground.size(), CV_8U);
+        cv::Mat model = cv::Mat::zeros(human->foreground.size(), CV_8U);
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder, cv::Scalar(255,255,255), 50);
+        cv::Point skeleton[] = {
+            human->projected.leftHand, jointPoint2(skel, JOINT_ELBOWL),
+            jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder,
 
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightHand, cv::Scalar(255,255,255), 50);
-        cv::line(modelOutline, jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder, cv::Scalar(255,255,255), 50);
+            human->projected.rightHand, jointPoint2(skel, JOINT_ELBOWR),
+            jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
+        };
 
-        /* reward outline */
-        costAccumulator -= cv::countNonZero(human->edgeImage & modelOutline);
+        int cost = drawModelOutline(model, skeleton, COUNT(skeleton));
 
-        /* reward foreground */
-        costAccumulator -= cv::countNonZero(human->foreground & modelOutline) / 16;
+        /* reward outline, foreground, motion */
+        cost -= cv::countNonZero(human->edgeImage & model);
+        cost -= cv::countNonZero(human->foreground & model) / 16;
+        cost -= cv::countNonZero(human->motion & model) * 2;
 
-        /* reward motion outline */
-        costAccumulator -= cv::countNonZero(human->motion & modelOutline) * 2;
-
-        /* bias lengths */
-        int elbowLeftBias = cv::norm(human->projected.leftHand - jointPoint2(skel, JOINT_ELBOWL))
-                          + cv::norm(human->projected.leftShoulder - jointPoint2(skel, JOINT_ELBOWL));
-        int elbowRightBias = cv::norm(human->projected.rightHand - jointPoint2(skel, JOINT_ELBOWR))
-                           + cv::norm(human->projected.rightShoulder - jointPoint2(skel, JOINT_ELBOWR));
-
-        costAccumulator += 10 * (elbowRightBias + elbowLeftBias);
-
-        return costAccumulator;
+        return cost;
     }
 
     void Context::step() {

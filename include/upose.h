@@ -8,6 +8,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#define COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
+
 namespace upose {
     struct Features2D {
         cv::Point face;
