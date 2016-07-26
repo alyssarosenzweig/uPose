@@ -103,6 +103,21 @@ namespace upose {
         return cv::boundingRect(l).width > cv::boundingRect(r).width;
     }
 
+    cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
+        int sumX = 0, sumY = 0, sumR = 0;
+
+        for(unsigned int i = 0; i < contour.size(); ++i) {
+            int r = cv::norm(shoulder - contour[i]);
+            r = r * log(r);
+
+            sumR += r;
+            sumX += r * contour[i].x;
+            sumY += r * contour[i].y;
+        }
+
+        return cv::Point(sumX / sumR, sumY / sumR);
+    }
+
     void Context::track2DFeatures(cv::Mat foreground, cv::Mat skin) {
         cv::Mat tracked = foreground & skin;
 
@@ -111,8 +126,6 @@ namespace upose {
         cv::blur(tracked, tracked, cv::Size(3, 3));
         cv::blur(tracked > 254, tracked, cv::Size(9, 9));
         tracked = tracked > 0;
-
-        cv::imshow("Tracked", tracked);
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -176,23 +189,18 @@ namespace upose {
 
             /* adjust for sleeves */
             if(indices[1] > -1) {
-                int sumX = 0, sumY = 0, sumR = 0;
-
-                for(unsigned int i = 0; i < contours[indices[1]].size(); ++i) {
-                    int r = cv::norm(m_last2D.leftShoulder - contours[indices[1]][i]);
-                    r = r * log(r);
-
-                    sumR += r;
-                    sumX += r * contours[indices[1]][i].x;
-                    sumY += r * contours[indices[1]][i].y;
-                }
-
-                printf("(%d, %d) -> ", m_lastu2D.leftHand.x, m_lastu2D.leftHand.y);
-                m_last2D.leftHand = cv::Point(sumX / sumR, sumY / sumR);
-                printf("(%d, %d)\n", m_last2D.leftHand.x, m_last2D.leftHand.y);
+                m_last2D.leftHand = sleeveNormalize(
+                        contours[indices[1]], 
+                        m_last2D.leftShoulder
+                    );
             }
 
-            if(indices[2] > -1) m_last2D.rightHand = m_lastu2D.rightHand;
+            if(indices[2] > -1) {
+                m_last2D.rightHand = sleeveNormalize(
+                        contours[indices[2]], 
+                        m_last2D.rightShoulder
+                    );
+            }
         }
     }
 
