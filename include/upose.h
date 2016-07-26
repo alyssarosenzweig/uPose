@@ -55,7 +55,7 @@ namespace upose {
             cv::Mat edges(cv::Mat frame, cv::Mat foreground);
             cv::Mat edgeMotion(cv::Mat frame, cv::Mat edges);
 
-            Features2D m_last2D;
+            Features2D m_last2D, m_lastu2D;
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);
 
             UpperBodySkeleton m_skeleton;

@@ -91,7 +91,7 @@ namespace upose {
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[2]);
 
-        return (map > 2) & (map < 8);
+        return (map > 2) & (map < 10);
     }
 
     /**
@@ -108,8 +108,11 @@ namespace upose {
 
         cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
 
-        cv::blur(tracked, tracked, cv::Size(9, 9));
-        tracked = tracked > 127;
+        cv::blur(tracked, tracked, cv::Size(3, 3));
+        cv::blur(tracked > 254, tracked, cv::Size(9, 9));
+        tracked = tracked > 0;
+
+        cv::imshow("Tracked", tracked);
 
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
@@ -122,6 +125,8 @@ namespace upose {
         if(contours.size() >= 3) {
             for(unsigned int i = 0; i < 3; ++i) {
                 cv::Rect bounding = cv::boundingRect(contours[i]);
+
+                /* compute 'smart' centroid, assuming a relative static head */
                 cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
 
                 centroids.push_back(centroid);
@@ -129,8 +134,8 @@ namespace upose {
 
                 std::vector<int> cost;
                 cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y);
-                cost.push_back(cv::norm(m_last2D.leftHand - centroid) + centroid.x);
-                cost.push_back(cv::norm(m_last2D.rightHand - centroid) + (foreground.cols - centroid.x));
+                cost.push_back(cv::norm(m_lastu2D.leftHand - centroid) + centroid.x);
+                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (foreground.cols - centroid.x));
 
                 costs.push_back(cost);
             }
@@ -155,8 +160,8 @@ namespace upose {
             }
 
             if(indices[0] > -1) m_last2D.face      = centroids[indices[0]];
-            if(indices[1] > -1) m_last2D.leftHand  = centroids[indices[1]];
-            if(indices[2] > -1) m_last2D.rightHand = centroids[indices[2]];
+            if(indices[1] > -1) m_lastu2D.leftHand  = centroids[indices[1]];
+            if(indices[2] > -1) m_lastu2D.rightHand = centroids[indices[2]];
 
             /* assign shoulder positions relative to face */
 
@@ -168,6 +173,26 @@ namespace upose {
                 m_last2D.leftShoulder = neck + cv::Point(-face.width / 2, 0);
                 m_last2D.rightShoulder = neck + cv::Point(3*face.width / 2, 0);
             }
+
+            /* adjust for sleeves */
+            if(indices[1] > -1) {
+                int sumX = 0, sumY = 0, sumR = 0;
+
+                for(unsigned int i = 0; i < contours[indices[1]].size(); ++i) {
+                    int r = cv::norm(m_last2D.leftShoulder - contours[indices[1]][i]);
+                    r = r * log(r);
+
+                    sumR += r;
+                    sumX += r * contours[indices[1]][i].x;
+                    sumY += r * contours[indices[1]][i].y;
+                }
+
+                printf("(%d, %d) -> ", m_lastu2D.leftHand.x, m_lastu2D.leftHand.y);
+                m_last2D.leftHand = cv::Point(sumX / sumR, sumY / sumR);
+                printf("(%d, %d)\n", m_last2D.leftHand.x, m_last2D.leftHand.y);
+            }
+
+            if(indices[2] > -1) m_last2D.rightHand = m_lastu2D.rightHand;
         }
     }
 
@@ -205,7 +230,7 @@ namespace upose {
         return cost;
     }
 
-    int upperBodyOutline(UpperBodySkeleton skel, Human* human) {
+    int upperBodyOutline(cv::Mat model, UpperBodySkeleton skel, Human* human) {
         cv::Point skeleton[] = {
             human->projected.leftHand, jointPoint2(skel, JOINT_ELBOWL),
             jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder,
@@ -220,11 +245,11 @@ namespace upose {
     int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
         Human* human = (Human*) humanPtr;
 
-        /* draw the model outline with cost*/
+        /* draw the model outline with cost */
 
         cv::Mat model = cv::Mat::zeros(human->foreground.size(), CV_8U);
 
-        int cost = upperBodyOutline(skel, human);
+        int cost = upperBodyOutline(model, skel, human);
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
