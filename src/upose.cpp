@@ -244,10 +244,10 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder,
 
             human->projected.rightHand, jointPoint2(skel, JOINT_ELBOWR),
-            jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder,
+            jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder
         };
 
-        return 15 * drawModelOutline(model, skeleton, countof(skeleton));
+        return 3 * drawModelOutline(model, skeleton, countof(skeleton));
     }
 
     int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
@@ -262,7 +262,6 @@ namespace upose {
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model);
         cost -= cv::countNonZero(human->foreground & model) / 32;
-        cost -= cv::countNonZero(human->motion & model) * 4;
 
         return cost;
     }
