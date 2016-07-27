@@ -99,10 +99,6 @@ namespace upose {
      * that is, the face, the hands, and the feet
      */
 
-    bool compareWidth(std::vector<cv::Point> l, std::vector<cv::Point> r) {
-        return cv::boundingRect(l).width > cv::boundingRect(r).width;
-    }
-
     cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
         int sumX = 0, sumY = 0, sumR = 0;
 
@@ -127,33 +123,35 @@ namespace upose {
         cv::blur(tracked > 254, tracked, cv::Size(9, 9));
         tracked = tracked > 0;
 
+        cv::imshow("Tracked", tracked);
+
         std::vector<std::vector<cv::Point> > contours;
         cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-        std::sort(contours.begin(), contours.end(), compareWidth);
 
         std::vector<cv::Rect> boundings;
         std::vector<cv::Point> centroids;
         std::vector<std::vector<int> > costs;
 
         if(contours.size() >= 3) {
-            for(unsigned int i = 0; i < 3; ++i) {
+            for(unsigned int i = 0; i < contours.size(); ++i) {
                 cv::Rect bounding = cv::boundingRect(contours[i]);
 
-                /* compute 'smart' centroid, assuming a relative static head */
                 cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
 
                 centroids.push_back(centroid);
                 boundings.push_back(bounding);
 
+                int w = bounding.width;
+
                 std::vector<int> cost;
-                cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y);
-                cost.push_back(cv::norm(m_lastu2D.leftHand - centroid) + centroid.x);
-                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (foreground.cols - centroid.x));
+                cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y - w);
+                cost.push_back(cv::norm(m_lastu2D.leftHand - centroid) + centroid.x - w);
+                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (foreground.cols - centroid.x) - w);
 
                 costs.push_back(cost);
             }
 
-            std::vector<int> minFace = {
+            std::vector<int> minCost = {
                     (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
                     (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
                     (skin.rows*skin.rows + skin.cols*skin.cols) / 64
@@ -163,10 +161,10 @@ namespace upose {
 
             /* minimize errors */
 
-            for(unsigned int i = 0; i < 3; ++i) {
+            for(unsigned int i = 0; i < contours.size(); ++i) {
                 for(unsigned int p = 0; p < 3; ++p) {
-                    if(costs[i][p] < minFace[p]) {
-                        minFace[p] = costs[i][p];
+                    if(costs[i][p] < minCost[p]) {
+                        minCost[p] = costs[i][p];
                         indices[p] = i;
                     }
                 }
