@@ -29,14 +29,13 @@ namespace upose {
 
     class Human {
         public:
-            Human(cv::Mat _foreground, cv::Mat _skinRegions, cv::Mat _edgeImage, cv::Mat _motion, Features2D _projected) :
+            Human(cv::Mat _foreground, cv::Mat _skinRegions, cv::Mat _edgeImage, Features2D _projected) :
                                         foreground(_foreground),
                                         skinRegions(_skinRegions),
                                         edgeImage(_edgeImage),
-                                        motion(_motion),
                                         projected(_projected) {}
 
-            cv::Mat foreground, skinRegions, edgeImage, motion;
+            cv::Mat foreground, skinRegions, edgeImage;
             Features2D projected;
     };
 
@@ -53,7 +52,6 @@ namespace upose {
             cv::Mat backgroundSubtract(cv::Mat frame);
             cv::Mat skinRegions(cv::Mat frame);
             cv::Mat edges(cv::Mat frame, cv::Mat foreground);
-            cv::Mat edgeMotion(cv::Mat frame, cv::Mat edges);
 
             Features2D m_last2D, m_lastu2D;
             void track2DFeatures(cv::Mat foreground, cv::Mat skin);

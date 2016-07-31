@@ -228,7 +228,7 @@ namespace upose {
         int cost = 0;
 
         for(unsigned int i = 0; i < count; i += 2) {
-            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 50);
+            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 10);
 
             cost += cv::norm(lines[i] - lines[i+1]);
         }
@@ -245,7 +245,7 @@ namespace upose {
             jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder
         };
 
-        return 3 * drawModelOutline(model, skeleton, countof(skeleton));
+        return drawModelOutline(model, skeleton, countof(skeleton));
     }
 
     int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
@@ -258,8 +258,8 @@ namespace upose {
         int cost = upperBodyOutline(model, skel, human);
 
         /* reward outline, foreground, motion */
-        cost -= cv::countNonZero(human->edgeImage & model);
-        cost -= cv::countNonZero(human->foreground & model) / 32;
+        cost -= cv::countNonZero(human->edgeImage & model) / 8;
+        cost -= cv::countNonZero(human->foreground & model) / 16;
 
         return cost;
     }
@@ -273,7 +273,6 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
         cv::Mat edgeImage = edges(frame, foreground);
-        cv::Mat motion = edgeMotion(frame, edgeImage);
 
         track2DFeatures(foreground, skin);
 
@@ -281,7 +280,7 @@ namespace upose {
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
-                             10, 50,
+                             10, 100,
                              m_skeleton,
                              (void*) &human);
 
