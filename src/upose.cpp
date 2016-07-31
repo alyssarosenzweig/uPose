@@ -209,15 +209,6 @@ namespace upose {
         return edges & foreground;
     }
 
-    cv::Mat Context::edgeMotion(cv::Mat frame, cv::Mat edgeImage) {
-        cv::Mat motion = cv::abs(frame - m_lastFrame);
-        cv::cvtColor(motion, motion, CV_BGR2GRAY);
-
-        m_lastFrame = frame.clone();
-
-        return motion & edgeImage;
-    }
-
     cv::Point jointPoint2(int* joints, int index) {
         return cv::Point(joints[index], joints[index + 1]);
     }
@@ -276,11 +267,11 @@ namespace upose {
 
         track2DFeatures(foreground, skin);
 
-        Human human(foreground, skin, edgeImage, motion, m_last2D);
+        Human human(foreground, skin, edgeImage, m_last2D);
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
-                             10, 100,
+                             25, 100,
                              m_skeleton,
                              (void*) &human);
 
