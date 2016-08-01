@@ -219,7 +219,7 @@ namespace upose {
         int cost = 0;
 
         for(unsigned int i = 0; i < count; i += 2) {
-            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 10);
+            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 50);
 
             cost += cv::norm(lines[i] - lines[i+1]);
         }
@@ -249,8 +249,8 @@ namespace upose {
         int cost = upperBodyOutline(model, skel, human);
 
         /* reward outline, foreground, motion */
-        cost -= cv::countNonZero(human->edgeImage & model) / 8;
-        cost -= cv::countNonZero(human->foreground & model) / 16;
+        cost -= cv::countNonZero(human->edgeImage & model) / 4;
+        //cost -= cv::countNonZero(human->foreground & model) / 16;
 
         return cost;
     }
@@ -277,7 +277,7 @@ namespace upose {
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
-                             25, 100,
+                             25, 50,
                              m_skeleton,
                              (void*) &human);
 
