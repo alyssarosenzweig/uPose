@@ -66,11 +66,6 @@ namespace upose {
         }
    }
 
-    /**
-     * background subtraction logic
-     * The extra division in there helps account for illumination.
-     */
-
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
         cv::Mat foreground = cv::abs(m_background - frame);
         cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
@@ -85,16 +80,13 @@ namespace upose {
       * "A comparative assessment of three approaches to pixel level human skin-detection"
       */
 
-    cv::Mat Context::skinRegions(cv::Mat frame) {
+    cv::Mat Context::skinRegions(cv::Mat frame, cv::Mat foreground) {
         cv::Mat bgr[3];
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[2]);
+        cv::Mat skin = (map > 2) & (map < 10);
 
-        return (map > 2) & (map < 10);
-    }
-
-    cv::Mat normalizeSkin(cv::Mat skin, cv::Mat foreground) {
         cv::Mat tracked = foreground & skin;
 
         cv::blur(tracked, tracked, cv::Size(3, 3));
@@ -250,7 +242,6 @@ namespace upose {
 
         /* reward outline, foreground, motion */
         cost -= cv::countNonZero(human->edgeImage & model) / 4;
-        //cost -= cv::countNonZero(human->foreground & model) / 16;
 
         return cost;
     }
@@ -262,13 +253,7 @@ namespace upose {
         cv::Mat visualization = frame.clone();
         
         cv::Mat foreground = backgroundSubtract(frame);
-        cv::blur(foreground, foreground, cv::Size(5, 5));
-        foreground = foreground > 254;
-
-        cv::Mat skin = normalizeSkin(skinRegions(frame), foreground);
-
-        cv::Mat fgEdges = edges(foreground);
-        cv::Mat skinEdges = edges(skin);
+        cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
         track2DFeatures(skin);
@@ -283,6 +268,8 @@ namespace upose {
 
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         cv::imshow("visualization", visualization);
+
+        m_lastFrame = frame.clone();
     }
 
     void visualizeUpperSkeleton(cv::Mat out, Features2D f, UpperBodySkeleton skel) {
