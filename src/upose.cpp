@@ -96,7 +96,7 @@ namespace upose {
     }
 
     
-    /* find the farthest point from the point closest to the shoulder */
+    /* the hand is the farthest point from the point closest to the shoulder */
     cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
         int bestDist = 100000, bestIndex = 0;
 
@@ -109,7 +109,6 @@ namespace upose {
             }
         }
 
-        /* find the opposite side */
         return contour[(bestIndex + contour.size()/2) % contour.size()];
     }
 
