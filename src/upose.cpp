@@ -96,25 +96,27 @@ namespace upose {
     }
 
     
+    /* find the farthest point from the point closest to the shoulder */
+    cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
+        int bestDist = 100000, bestIndex = 0;
+
+        for(unsigned int i = 0; i < contour.size(); ++i) {
+            int dist = cv::norm(shoulder - contour[i]);
+
+            if(dist < bestDist) {
+                bestDist = dist;
+                bestIndex = i;
+            }
+        }
+
+        /* find the opposite side */
+        return contour[(bestIndex + contour.size()/2) % contour.size()];
+    }
+
     /**
      * tracks 2D features only, in 2D coordinates
      * that is, the face, the hands, and the feet
      */
-
-    cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
-        int sumX = 0, sumY = 0, sumR = 0;
-
-        for(unsigned int i = 0; i < contour.size(); ++i) {
-            int r = cv::norm(shoulder - contour[i]);
-            r = r * log(r);
-
-            sumR += r;
-            sumX += r * contour[i].x;
-            sumY += r * contour[i].y;
-        }
-
-        return cv::Point(sumX / sumR, sumY / sumR);
-    }
 
     void Context::track2DFeatures(cv::Mat skin) {
         std::vector<std::vector<cv::Point> > contours;
