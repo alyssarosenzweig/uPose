@@ -202,11 +202,11 @@ namespace upose {
         }
     }
 
-    cv::Mat Context::edges(cv::Mat frame, cv::Mat foreground) {
+    cv::Mat Context::edges(cv::Mat frame) {
         cv::Mat edges;
         cv::blur(frame, edges, cv::Size(3, 3));
         cv::Canny(edges, edges, 32, 32 * 2, 3);
-        return edges & foreground;
+        return edges;
     }
 
     cv::Point jointPoint2(int* joints, int index) {
@@ -262,8 +262,24 @@ namespace upose {
         cv::Mat visualization = frame.clone();
         
         cv::Mat foreground = backgroundSubtract(frame);
+        cv::blur(foreground, foreground, cv::Size(5, 5));
+        foreground = foreground > 254;
+
         cv::Mat skin = skinRegions(frame);
-        cv::Mat edgeImage = edges(frame, foreground);
+        cv::blur(skin, skin, cv::Size(5, 5));
+        skin = skin > 0;
+
+        cv::imshow("Skin", skin);
+
+        cv::Mat edgeImage = edges(frame) & foreground;
+        cv::Mat fgEdges = edges(foreground);
+        cv::Mat skinEdges = edges(skin) & foreground;
+
+        cv::imshow("Skin edges", skinEdges);
+        cv::imshow("FGEdges", fgEdges);
+
+        cv::Mat outline = fgEdges | skinEdges;
+        cv::imshow("Outline", outline);
 
         track2DFeatures(foreground, skin);
 
