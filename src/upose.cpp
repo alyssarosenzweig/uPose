@@ -94,6 +94,16 @@ namespace upose {
         return (map > 2) & (map < 10);
     }
 
+    cv::Mat normalizeSkin(cv::Mat skin, cv::Mat foreground) {
+        cv::Mat tracked = foreground & skin;
+
+        cv::blur(tracked, tracked, cv::Size(3, 3));
+        cv::blur(tracked > 254, tracked, cv::Size(9, 9));
+
+        return tracked > 0;
+    }
+
+    
     /**
      * tracks 2D features only, in 2D coordinates
      * that is, the face, the hands, and the feet
@@ -114,19 +124,9 @@ namespace upose {
         return cv::Point(sumX / sumR, sumY / sumR);
     }
 
-    void Context::track2DFeatures(cv::Mat foreground, cv::Mat skin) {
-        cv::Mat tracked = foreground & skin;
-
-        cv::cvtColor(foreground, foreground, CV_GRAY2BGR);
-
-        cv::blur(tracked, tracked, cv::Size(3, 3));
-        cv::blur(tracked > 254, tracked, cv::Size(9, 9));
-        tracked = tracked > 0;
-
-        cv::imshow("Tracked", tracked);
-
+    void Context::track2DFeatures(cv::Mat skin) {
         std::vector<std::vector<cv::Point> > contours;
-        cv::findContours(tracked, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+        cv::findContours(skin, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
         std::vector<cv::Rect> boundings;
         std::vector<cv::Point> centroids;
@@ -146,7 +146,7 @@ namespace upose {
                 std::vector<int> cost;
                 cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y - w);
                 cost.push_back(cv::norm(m_lastu2D.leftHand - centroid) + centroid.x - w);
-                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (foreground.cols - centroid.x) - w);
+                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (skin.cols - centroid.x) - w);
 
                 costs.push_back(cost);
             }
@@ -265,25 +265,15 @@ namespace upose {
         cv::blur(foreground, foreground, cv::Size(5, 5));
         foreground = foreground > 254;
 
-        cv::Mat skin = skinRegions(frame);
-        cv::blur(skin, skin, cv::Size(5, 5));
-        skin = skin > 0;
+        cv::Mat skin = normalizeSkin(skinRegions(frame), foreground);
 
-        cv::imshow("Skin", skin);
-
-        cv::Mat edgeImage = edges(frame) & foreground;
         cv::Mat fgEdges = edges(foreground);
-        cv::Mat skinEdges = edges(skin) & foreground;
+        cv::Mat skinEdges = edges(skin);
+        cv::Mat outline = edges(foreground) | edges(skin);
 
-        cv::imshow("Skin edges", skinEdges);
-        cv::imshow("FGEdges", fgEdges);
+        track2DFeatures(skin);
 
-        cv::Mat outline = fgEdges | skinEdges;
-        cv::imshow("Outline", outline);
-
-        track2DFeatures(foreground, skin);
-
-        Human human(foreground, skin, edgeImage, m_last2D);
+        Human human(foreground, skin, outline, m_last2D);
 
         optimizeRandomSearch(costFunction2D,
                              countof(m_skeleton),
