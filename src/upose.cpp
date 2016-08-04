@@ -86,7 +86,7 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[2]);
-        cv::Mat skin = (map > 2) & (map < 10);
+        cv::Mat skin = (map > 1) & (map < 16);
 
         cv::Mat tracked = foreground & skin;
 
