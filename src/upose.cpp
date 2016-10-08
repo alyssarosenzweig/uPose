@@ -13,11 +13,6 @@
 namespace upose {
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
-        m_lastFrame = m_background;
-
-        for(unsigned int i = 0; i < countof(m_skeleton); ++i) {
-            m_skeleton[i] = 0;
-        }
    }
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
@@ -40,7 +35,7 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
-        cv::Mat skin = map > 1 & map < 16;
+        cv::Mat skin = (map > 4) & (map < 20);
 
         cv::Mat tracked = foreground & skin;
 
@@ -128,6 +123,8 @@ namespace upose {
                 cv::Rect face = boundings[indices[0]];
                 cv::Point neck = cv::Point(face.x, face.y + 2*face.width);
 
+                /* face.x is to the left of the face -- compensate width */
+
                 m_last2D.neck = neck;
                 m_last2D.leftShoulder = neck + cv::Point(-face.width / 2, 0);
                 m_last2D.rightShoulder = neck + cv::Point(3*face.width / 2, 0);
@@ -172,20 +169,22 @@ namespace upose {
 
         track2DFeatures(skin);
 
-        visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
+        visualizeUpperSkeleton(visualization, m_last2D);
         cv::imshow("visualization", visualization);
     }
 
-    void visualizeUpperSkeleton(cv::Mat out, Features2D f, UpperBodySkeleton skel) {
+    void visualizeUpperSkeleton(cv::Mat out, Features2D f) {
         cv::Scalar c(0, 200, 0); /* color */
         int t = 5; /* line thickness */
 
-        cv::line(out, f.leftHand, jointPoint2(skel, JOINT_ELBOWL), c, t);
-        cv::line(out, jointPoint2(skel, JOINT_ELBOWL), f.leftShoulder, c, t);
+        /*cv::line(out, f.leftHand, f.leftElbow, c, t);
+        cv::line(out, f.leftElbow, f.leftShoulder, c, t);*/
+        cv::line(out, f.leftShoulder, f.leftHand, c, t);
         cv::line(out, f.leftShoulder, f.neck, c, t);
 
-        cv::line(out, f.rightHand, jointPoint2(skel, JOINT_ELBOWR), c, t);
-        cv::line(out, jointPoint2(skel, JOINT_ELBOWR), f.rightShoulder, c, t);
+        /*cv::line(out, f.rightHand, f.rightElbow, c, t);
+        cv::line(out, f.rightElbow, f.rightShoulder, c, t);*/
+        cv::line(out, f.rightShoulder, f.rightHand, c, t);
         cv::line(out, f.rightShoulder, f.neck, c, t);
 
         cv::line(out, f.neck, f.face, c, t);
