@@ -11,52 +11,6 @@
 #include <upose.h>
 
 namespace upose {
-    /**
-     * implements a crude, random search to optimize a function
-     * TODO: switch to an advanced optimization algorithm
-     */
-
-    void optimizeRandomSearch(
-            int (*cost)(int*, void*), /* cost function to minimize */
-            int dimension, /* dimension of cost function */
-            int iterationCount, /* number of iterations to run */
-            int radius, /* radius of hypersphere */
-            int* optimum, /* on entry, initial guess. on exit, minimum */
-            void* context /* pointer passed to the cost function */
-        ) {
-        size_t size = sizeof(int) * dimension;
-
-        int* candidate = (int*) malloc(size);
-        memcpy(candidate, optimum, size);
-
-        int best = cost(optimum, context);
-
-        for(int iteration = 0; iteration < iterationCount; ++iteration) {
-            /* step algorithm */
-            int dim = iteration % dimension,
-                change = (rand() % (2*radius)) - radius;
-
-            candidate[dim] = optimum[dim] + change;
-
-            /* save if a better solution */
-            int candidateCost = cost(candidate, context);
-
-            if(candidateCost < best) {
-                memcpy(optimum, candidate, size);
-                best = candidateCost;
-            } else {
-                candidate[dim] = optimum[dim];
-            }
-        }
-
-        free(candidate);
-    }
-
-    /**
-     * Context class: maintains a skeletal tracking context
-     * the constructor initializes background subtraction, 2d tracking
-     */
-
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
         m_lastFrame = m_background;
@@ -86,7 +40,7 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
-        cv::Mat skin = (map > 1) & (map < 16);
+        cv::Mat skin = map > 1 & map < 16;
 
         cv::Mat tracked = foreground & skin;
 
@@ -203,51 +157,6 @@ namespace upose {
         return edges;
     }
 
-    cv::Point jointPoint2(int* joints, int index) {
-        return cv::Point(joints[index], joints[index + 1]);
-    }
-
-    /* given a list of connected points, draw the outline and compute cost */
-
-    int drawModelOutline(cv::Mat outline, cv::Point* lines, size_t count) {
-        int cost = 0;
-
-        for(unsigned int i = 0; i < count; i += 2) {
-            cv::line(outline, lines[i], lines[i+1], cv::Scalar::all(255), 50);
-
-            cost += cv::norm(lines[i] - lines[i+1]);
-        }
-
-        return cost;
-    }
-
-    int upperBodyOutline(cv::Mat model, UpperBodySkeleton skel, Human* human) {
-        cv::Point skeleton[] = {
-            human->projected.leftHand, jointPoint2(skel, JOINT_ELBOWL),
-            jointPoint2(skel, JOINT_ELBOWL), human->projected.leftShoulder,
-
-            human->projected.rightHand, jointPoint2(skel, JOINT_ELBOWR),
-            jointPoint2(skel, JOINT_ELBOWR), human->projected.rightShoulder
-        };
-
-        return drawModelOutline(model, skeleton, countof(skeleton));
-    }
-
-    int costFunction2D(UpperBodySkeleton skel, void* humanPtr) {
-        Human* human = (Human*) humanPtr;
-
-        /* draw the model outline with cost */
-
-        cv::Mat model = cv::Mat::zeros(human->foreground.size(), CV_8U);
-
-        int cost = upperBodyOutline(model, skel, human);
-
-        /* reward outline, foreground, motion */
-        cost -= cv::countNonZero(human->edgeImage & model) / 4;
-
-        return cost;
-    }
-
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
@@ -259,21 +168,12 @@ namespace upose {
         cv::Mat outline = edges(foreground) | edges(skin);
 
         cv::imshow("Outline", outline);
+        cv::imshow("Skin", skin);
 
         track2DFeatures(skin);
 
-        Human human(foreground, skin, outline, m_last2D);
-
-        optimizeRandomSearch(costFunction2D,
-                             countof(m_skeleton),
-                             25, 50,
-                             m_skeleton,
-                             (void*) &human);
-
         visualizeUpperSkeleton(visualization, m_last2D, m_skeleton);
         cv::imshow("visualization", visualization);
-
-        m_lastFrame = frame.clone();
     }
 
     void visualizeUpperSkeleton(cv::Mat out, Features2D f, UpperBodySkeleton skel) {
