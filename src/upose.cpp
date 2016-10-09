@@ -20,6 +20,7 @@ namespace upose {
         cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
 
         cv::blur(foreground > 0, foreground, cv::Size(5, 5));
+        cv::blur(foreground > 0, foreground, cv::Size(7, 7));
         return foreground > 254;
     }
 
@@ -164,8 +165,13 @@ namespace upose {
         cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
+        cv::imshow("FG", foreground);
         cv::imshow("Outline", outline);
         cv::imshow("Skin", skin);
+
+        cv::Mat dist;
+        cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
+        cv::imshow("Dist", dist / 100);
 
         track2DFeatures(skin);
 
