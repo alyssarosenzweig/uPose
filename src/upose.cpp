@@ -13,7 +13,7 @@
 namespace upose {
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
-   }
+    }
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
         cv::Mat foreground = cv::abs(m_background - frame);
@@ -165,46 +165,39 @@ namespace upose {
         cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
-        cv::Mat dist;
+        /*cv::Mat dist;
         cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
         dist.convertTo(dist, CV_8U);
         //dist = dist > 10;
-        cv::imshow("Dist", dist);
+        cv::imshow("Dist", dist);*/
+
+        /* get edges */
+        cv::Mat sx, sy;
+        cv::Scharr(frame, sx, CV_32F, 1, 0);
+        cv::Scharr(frame, sy, CV_32F, 1, 0);
+
+        /* get magnitude */
+        cv::Mat mag;
+        cv::magnitude(sx, sy, mag);
+
+        /* get orientation */
+        cv::Mat theta;
+        cv::phase(sx, sy, theta);
+
+        mag.convertTo(mag, CV_8UC3);
 
         track2DFeatures(skin);
 
+        cv::circle(mag, m_last2D.leftHand, 15, cv::Scalar(255, 0, 0), -1);
+
+        cv::imshow("Magnitude", mag);
+        cv::imshow("Phase", (theta / 6.28));
+
+
         /* use two-point estimate to find elbow and shoulder from hand */
-
-        /* choose theta and length */
-        int maxReward = 0;
-        cv::Point start = m_last2D.leftHand, optimum;
-
-        for(float theta1 = 0; theta1 < 6.28; theta1 += 0.01) {
-            cv::Point unit = cv::Point(cosf(theta1), sin(theta1));
-
-            int l = 30;
-
-            cv::Mat canvas = cv::Mat::zeros(dist.size(), CV_8U);
-            cv::Point pt = start + l*unit;
-            cv::line(canvas, start, pt, cv::Scalar(255,255,255));
-
-            int reward = cv::sum(dist & canvas)[0];
-            //int reward = cv::countNonZero(canvas & dist);
-
-            if(reward > maxReward) {
-                cv::imshow("Canvas", canvas);
-                optimum = pt;
-                maxReward = reward;
-            } else {
-                break;
-            }
-        }
 
     
         visualizeUpperSkeleton(visualization, m_last2D);
-        if(maxReward > 0) {
-            cv::circle(visualization, optimum, 15, cv::Scalar(255,0,0), -1);
-        }
 
         cv::imshow("visualization", visualization);
     }
