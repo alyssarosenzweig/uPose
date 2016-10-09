@@ -165,17 +165,47 @@ namespace upose {
         cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
-/*        cv::imshow("FG", foreground);
-        cv::imshow("Outline", outline);
-        cv::imshow("Skin", skin);*/
-
         cv::Mat dist;
         cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
-        cv::imshow("Dist", dist / 100);
+        dist.convertTo(dist, CV_8U);
+        //dist = dist > 10;
+        cv::imshow("Dist", dist);
 
         track2DFeatures(skin);
 
+        /* use two-point estimate to find elbow and shoulder from hand */
+
+        /* choose theta and length */
+        int maxReward = 0;
+        cv::Point start = m_last2D.leftHand, optimum;
+
+        for(float theta1 = 0; theta1 < 6.28; theta1 += 0.01) {
+            cv::Point unit = cv::Point(cosf(theta1), sin(theta1));
+
+            int l = 30;
+
+            cv::Mat canvas = cv::Mat::zeros(dist.size(), CV_8U);
+            cv::Point pt = start + l*unit;
+            cv::line(canvas, start, pt, cv::Scalar(255,255,255));
+
+            int reward = cv::sum(dist & canvas)[0];
+            //int reward = cv::countNonZero(canvas & dist);
+
+            if(reward > maxReward) {
+                cv::imshow("Canvas", canvas);
+                optimum = pt;
+                maxReward = reward;
+            } else {
+                break;
+            }
+        }
+
+    
         visualizeUpperSkeleton(visualization, m_last2D);
+        if(maxReward > 0) {
+            cv::circle(visualization, optimum, 15, cv::Scalar(255,0,0), -1);
+        }
+
         cv::imshow("visualization", visualization);
     }
 
