@@ -165,9 +165,9 @@ namespace upose {
         cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
-        cv::imshow("FG", foreground);
+/*        cv::imshow("FG", foreground);
         cv::imshow("Outline", outline);
-        cv::imshow("Skin", skin);
+        cv::imshow("Skin", skin);*/
 
         cv::Mat dist;
         cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
