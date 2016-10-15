@@ -46,115 +46,6 @@ namespace upose {
         return tracked > 0;
     }
 
-    
-    /* the hand is the farthest point from the point closest to the shoulder */
-    cv::Point sleeveNormalize(std::vector<cv::Point> contour, cv::Point shoulder) {
-        int bestDist = 100000, bestIndex = 0;
-
-        for(unsigned int i = 0; i < contour.size(); ++i) {
-            int dist = cv::norm(shoulder - contour[i]);
-
-            if(dist < bestDist) {
-                bestDist = dist;
-                bestIndex = i;
-            }
-        }
-
-        return contour[(bestIndex + contour.size()/2) % contour.size()];
-    }
-
-    /**
-     * tracks 2D features only, in 2D coordinates
-     * that is, the face, the hands, and the feet
-     */
-
-    void Context::track2DFeatures(cv::Mat skin) {
-        std::vector<std::vector<cv::Point> > contours;
-        cv::findContours(skin, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-
-        std::vector<cv::Rect> boundings;
-        std::vector<cv::Point> centroids;
-        std::vector<std::vector<int> > costs;
-
-        if(contours.size() >= 3) {
-            for(unsigned int i = 0; i < contours.size(); ++i) {
-                cv::Rect bounding = cv::boundingRect(contours[i]);
-
-                cv::Point centroid = (bounding.tl() + bounding.br()) * 0.5;
-
-                centroids.push_back(centroid);
-                boundings.push_back(bounding);
-
-                int w = bounding.width;
-
-                std::vector<int> cost;
-                cost.push_back(cv::norm(m_last2D.face - centroid) + centroid.y - w);
-                cost.push_back(cv::norm(m_lastu2D.leftHand - centroid) + centroid.x - w);
-                cost.push_back(cv::norm(m_lastu2D.rightHand - centroid) + (skin.cols - centroid.x) - w);
-
-                costs.push_back(cost);
-            }
-
-            std::vector<int> minCost = {
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64,
-                    (skin.rows*skin.rows + skin.cols*skin.cols) / 64
-            };
-
-            std::vector<int> indices = { -1, -1, -1 };
-
-            /* minimize errors */
-
-            for(unsigned int i = 0; i < contours.size(); ++i) {
-                for(unsigned int p = 0; p < 3; ++p) {
-                    if(costs[i][p] < minCost[p]) {
-                        minCost[p] = costs[i][p];
-                        indices[p] = i;
-                    }
-                }
-            }
-
-            if(indices[0] > -1) m_last2D.face      = centroids[indices[0]];
-            if(indices[1] > -1) m_lastu2D.leftHand  = centroids[indices[1]];
-            if(indices[2] > -1) m_lastu2D.rightHand = centroids[indices[2]];
-
-            /* assign shoulder positions relative to face */
-
-            if(indices[0] > -1) {
-                cv::Rect face = boundings[indices[0]];
-                cv::Point neck = cv::Point(face.x, face.y + 2*face.width);
-
-                /* face.x is to the left of the face -- compensate width */
-
-                m_last2D.neck = neck;
-                m_last2D.leftShoulder = neck + cv::Point(-face.width / 2, 0);
-                m_last2D.rightShoulder = neck + cv::Point(3*face.width / 2, 0);
-            }
-
-            /* adjust for sleeves */
-            if(indices[1] > -1) {
-                m_last2D.leftHand = sleeveNormalize(
-                        contours[indices[1]], 
-                        m_last2D.leftShoulder
-                    );
-            }
-
-            if(indices[2] > -1) {
-                m_last2D.rightHand = sleeveNormalize(
-                        contours[indices[2]], 
-                        m_last2D.rightShoulder
-                    );
-            }
-        }
-    }
-
-    cv::Mat Context::edges(cv::Mat frame) {
-        cv::Mat edges;
-        cv::blur(frame, edges, cv::Size(3, 3));
-        cv::Canny(edges, edges, 32, 32 * 2, 3);
-        return edges;
-    }
-
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
@@ -163,22 +54,6 @@ namespace upose {
         
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame, foreground);
-        cv::Mat outline = edges(foreground) | edges(skin);
-
-        cv::Mat dist;
-        cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
-        cv::imshow("Dist", dist);
-
-        /* calculate gradient direction with Sobel */
-        cv::Mat sx, sy;
-        cv::Sobel(dist, sx, CV_32F, 1, 0, 5);
-        cv::Sobel(dist, sy, CV_32F, 0, 1, 5);
-
-        cv::Mat mag, angle;
-        cv::cartToPolar(sx, sy, mag, angle);
-
-        cv::imshow("Mag", ~((mag < 128) & foreground));
-        cv::imshow("Angle", angle / 3.14);
 
         cv::imshow("Frame", frame);
     }
