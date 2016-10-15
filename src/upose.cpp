@@ -20,7 +20,7 @@ namespace upose {
         cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
 
         cv::blur(foreground > 0, foreground, cv::Size(5, 5));
-        cv::blur(foreground > 0, foreground, cv::Size(7, 7));
+        cv::blur(foreground > 254, foreground, cv::Size(7, 7));
         return foreground > 254;
     }
 
@@ -165,38 +165,33 @@ namespace upose {
         cv::Mat skin = skinRegions(frame, foreground);
         cv::Mat outline = edges(foreground) | edges(skin);
 
-        /*cv::Mat dist;
+        cv::Mat dist;
         cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
         dist.convertTo(dist, CV_8U);
-        //dist = dist > 10;
-        cv::imshow("Dist", dist);*/
 
-        /* get edges */
-        cv::Mat sx, sy;
-        cv::Scharr(frame, sx, CV_32F, 1, 0);
-        cv::Scharr(frame, sy, CV_32F, 1, 0);
+        cv::Mat t;
+        cv::blur(dist, t, cv::Size(3, 3));
+        dist -= t;
+        dist = dist > 0;
 
-        /* get magnitude */
-        cv::Mat mag;
-        cv::magnitude(sx, sy, mag);
+        cv::imshow("Dist", dist);
 
-        /* get orientation */
-        cv::Mat theta;
-        cv::phase(sx, sy, theta);
+        /* apply probabilistic hough transform */
+        std::vector<cv::Vec4i> lines;
+        cv::HoughLinesP(dist.clone(), lines, 1, CV_PI/180, 10, 30, 10);
 
-        mag.convertTo(mag, CV_8UC3);
+        for(int i = 0; i < lines.size(); ++i) {
+            cv::line(frame, cv::Point(lines[i][0], lines[i][1]),
+                           cv::Point(lines[i][2], lines[i][3]),
+                           cv::Scalar(0, 0, 255),
+                           3, 8);
+        }
+
+        //cv::imshow("Dist", dist);
+        cv::imshow("Frame", frame);
 
         track2DFeatures(skin);
 
-        cv::circle(mag, m_last2D.leftHand, 15, cv::Scalar(255, 0, 0), -1);
-
-        cv::imshow("Magnitude", mag);
-        cv::imshow("Phase", (theta / 6.28));
-
-
-        /* use two-point estimate to find elbow and shoulder from hand */
-
-    
         visualizeUpperSkeleton(visualization, m_last2D);
 
         cv::imshow("visualization", visualization);
