@@ -167,34 +167,20 @@ namespace upose {
 
         cv::Mat dist;
         cv::distanceTransform(foreground, dist, CV_DIST_L1, 3);
-        dist.convertTo(dist, CV_8U);
-
-        cv::Mat t;
-        cv::blur(dist, t, cv::Size(3, 3));
-        dist -= t;
-        dist = dist > 0;
-
         cv::imshow("Dist", dist);
 
-        /* apply probabilistic hough transform */
-        std::vector<cv::Vec4i> lines;
-        cv::HoughLinesP(dist.clone(), lines, 1, CV_PI/180, 10, 30, 10);
+        /* calculate gradient direction with Sobel */
+        cv::Mat sx, sy;
+        cv::Sobel(dist, sx, CV_32F, 1, 0, 5);
+        cv::Sobel(dist, sy, CV_32F, 0, 1, 5);
 
-        for(int i = 0; i < lines.size(); ++i) {
-            cv::line(frame, cv::Point(lines[i][0], lines[i][1]),
-                           cv::Point(lines[i][2], lines[i][3]),
-                           cv::Scalar(0, 0, 255),
-                           3, 8);
-        }
+        cv::Mat mag, angle;
+        cv::cartToPolar(sx, sy, mag, angle);
 
-        //cv::imshow("Dist", dist);
+        cv::imshow("Mag", ~((mag < 128) & foreground));
+        cv::imshow("Angle", angle / 3.14);
+
         cv::imshow("Frame", frame);
-
-        track2DFeatures(skin);
-
-        visualizeUpperSkeleton(visualization, m_last2D);
-
-        cv::imshow("visualization", visualization);
     }
 
     void visualizeUpperSkeleton(cv::Mat out, Features2D f) {
