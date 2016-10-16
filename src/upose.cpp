@@ -55,12 +55,10 @@ namespace upose {
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
         map.convertTo(map, CV_64F);
+        map -= 15;
 
-        map -= 10;
-
-        cv::Mat diff = -map.mul(map) * 0.02;
+        cv::Mat diff = -map.mul(map) * 0.01;
         cv::exp(diff, diff);
-        cv::imshow("DIFF", diff);
         return diff;
     }
 
