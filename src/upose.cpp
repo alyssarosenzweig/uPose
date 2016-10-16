@@ -65,6 +65,7 @@ namespace upose {
     }
 
     cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
+                                       cv::Mat pdt,
                                        cv::Mat skin,
                                        cv::Point centroid) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
@@ -76,6 +77,9 @@ namespace upose {
 
                 /* update with foreground model */
                 p *= foreground.at<double>(y, x);
+
+                /* update with distance model */
+                p *= pdt.at<double>(y, x);
 
                 /* update with skin model */
                 p *= skin.at<double>(y, x);
@@ -126,7 +130,7 @@ namespace upose {
                 centroidM.m01 / centroidM.m00
             );
 
-        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, centroid) * 255;
+        cv::Mat handmap = leftHandmap(frame.size(), foreground, pdt, skin, centroid) * 255;
         handmap.convertTo(handmap, CV_8U);
         applyColorMap(handmap, handmap, cv::COLORMAP_JET);
         cv::imshow("Color", handmap);
