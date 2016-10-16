@@ -119,7 +119,7 @@ namespace upose {
         pdt = pdt.mul(foreground);
 
         cv::Mat visualPDT;
-        visualPDT *= 255;
+        visualPDT = pdt * 255;
         visualPDT.convertTo(visualPDT, CV_8U);
         applyColorMap(visualPDT, visualPDT, cv::COLORMAP_JET);
         cv::imshow("PDT", visualPDT);
