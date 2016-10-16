@@ -106,17 +106,19 @@ namespace upose {
         cv::imshow("Skin", skin);
 
         /* approximate probabilistic distance transform */
-        int pdtConstant = 127;
+        int pdtConstant = 63;
 
         cv::Mat pdt;
         cv::boxFilter(foreground, pdt, -1, cv::Size(pdtConstant, pdtConstant),
                                            cv::Point(-1, -1), false);
         pdt = (pdt - foreground) / (pdtConstant*pdtConstant - 1);
         pdt = pdt.mul(foreground);
-        pdt *= 255;
-        pdt.convertTo(pdt, CV_8U);
-        applyColorMap(pdt, pdt, cv::COLORMAP_JET);
-        cv::imshow("PDT", pdt);
+
+        cv::Mat visualPDT;
+        visualPDT *= 255;
+        visualPDT.convertTo(visualPDT, CV_8U);
+        applyColorMap(visualPDT, visualPDT, cv::COLORMAP_JET);
+        cv::imshow("PDT", visualPDT);
 
         cv::Moments centroidM = cv::moments(foreground);
         cv::Point centroid = cv::Point(
