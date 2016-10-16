@@ -31,29 +31,62 @@ namespace upose {
       * "A comparative assessment of three approaches to pixel level human skin-detection"
       */
 
-    cv::Mat Context::skinRegions(cv::Mat frame, cv::Mat foreground) {
+    cv::Mat Context::skinRegions(cv::Mat frame) {
         cv::Mat bgr[3];
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
         cv::Mat skin = (map > 4) & (map < 20);
 
-        cv::Mat tracked = foreground & skin;
+        cv::blur(skin, skin, cv::Size(3, 3));
+        cv::blur(skin > 254, skin, cv::Size(9, 9));
 
-        cv::blur(tracked, tracked, cv::Size(3, 3));
-        cv::blur(tracked > 254, tracked, cv::Size(9, 9));
+        return skin > 0;
+    }
 
-        return tracked > 0;
+    cv::Mat leftHandmap(cv::Size size, cv::Mat skin, cv::Point centroid) {
+        cv::Mat map = cv::Mat::zeros(size, CV_32F);
+
+        for(int x = 0; x < size.width; ++x) {
+            for(int y = 0; y < size.height; ++y) {
+                /* calculate probability */
+                double p = 1;
+
+                /* update with skin model */
+                p *= skin.at<uint8_t>(y, x) ? 0.9 : 0.1;
+
+                /* update with centroid X model */
+                double dx = (x - centroid.x) - (-200);
+                p *= exp(-dx*dx/90000);
+
+                /* update with centroid Y model */
+                double dy = (double) (y - centroid.y) - (-200);
+                p *= exp(-dy*dy/90000);
+
+                map.at<float>(y, x) = p;
+            }
+        }
+
+        return map;
     }
 
     void Context::step() {
         cv::Mat frame;
         m_camera.read(frame);
 
-        cv::Mat visualization = frame.clone();
-        
         cv::Mat foreground = backgroundSubtract(frame);
-        cv::Mat skin = skinRegions(frame, foreground);
+        cv::Mat skin = skinRegions(frame);
+
+        cv::Moments centroidM = cv::moments(foreground);
+        cv::Point centroid = cv::Point(
+                centroidM.m10 / centroidM.m00,
+                centroidM.m01 / centroidM.m00
+            );
+
+        cv::Mat handmap = leftHandmap(frame.size(), skin, centroid) * 255;
+        handmap.convertTo(handmap, CV_8U);
+        applyColorMap(handmap, handmap, cv::COLORMAP_JET);
+        cv::imshow("Color", handmap);
 
         cv::imshow("Frame", frame);
     }

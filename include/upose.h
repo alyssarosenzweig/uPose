@@ -29,7 +29,7 @@ namespace upose {
 
             cv::Mat m_background;
             cv::Mat backgroundSubtract(cv::Mat frame);
-            cv::Mat skinRegions(cv::Mat frame, cv::Mat foreground);
+            cv::Mat skinRegions(cv::Mat frame);
             cv::Mat edges(cv::Mat frame);
 
             Features2D m_last2D, m_lastu2D;
