@@ -44,6 +44,9 @@ namespace upose {
       * the Y and Q components are not necessary, however.
       * algorithm from Brand and Mason 2000
       * "A comparative assessment of three approaches to pixel level human skin-detection"
+      *
+      * TODO: again, research better probabilistic models
+      * for now use a bell curve with μ = 10
       */
 
     cv::Mat Context::skinRegions(cv::Mat frame) {
@@ -51,12 +54,14 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
-        cv::Mat skin = (map > 4) & (map < 20);
+        map.convertTo(map, CV_64F);
 
-        cv::blur(skin, skin, cv::Size(3, 3));
-        cv::blur(skin > 254, skin, cv::Size(9, 9));
+        map -= 10;
 
-        return skin > 0;
+        cv::Mat diff = -map.mul(map) * 0.02;
+        cv::exp(diff, diff);
+        cv::imshow("DIFF", diff);
+        return diff;
     }
 
     cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
@@ -98,6 +103,20 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
 
         cv::imshow("Foreground", foreground);
+        cv::imshow("Skin", skin);
+
+        /* approximate probabilistic distance transform */
+        int pdtConstant = 127;
+
+        cv::Mat pdt;
+        cv::boxFilter(foreground, pdt, -1, cv::Size(pdtConstant, pdtConstant),
+                                           cv::Point(-1, -1), false);
+        pdt = (pdt - foreground) / (pdtConstant*pdtConstant - 1);
+        pdt = pdt.mul(foreground);
+        pdt *= 255;
+        pdt.convertTo(pdt, CV_8U);
+        applyColorMap(pdt, pdt, cv::COLORMAP_JET);
+        cv::imshow("PDT", pdt);
 
         cv::Moments centroidM = cv::moments(foreground);
         cv::Point centroid = cv::Point(
