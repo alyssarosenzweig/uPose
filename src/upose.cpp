@@ -32,7 +32,7 @@ namespace upose {
 
         cv::Mat foreground = cv::abs(m_background - frame);
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
-        foreground.convertTo(foreground, CV_64F);
+        foreground.convertTo(foreground, CV_32F);
         
         cv::Mat diff = -(foreground - 40) * 0.1;
         cv::exp(diff, diff);
@@ -54,7 +54,7 @@ namespace upose {
         cv::split(frame, bgr);
 
         cv::Mat map = (0.6*bgr[2]) - (0.3*bgr[1]) - (0.3*bgr[0]);
-        map.convertTo(map, CV_64F);
+        map.convertTo(map, CV_32F);
         map -= 15;
 
         cv::Mat diff = -map.mul(map) * 0.01;
@@ -71,23 +71,23 @@ namespace upose {
         for(int x = 0; x < size.width; ++x) {
             for(int y = 0; y < size.height; ++y) {
                 /* calculate probability */
-                double p = 1;
+                float p = 1;
 
                 /* update with foreground model */
-                p *= foreground.at<double>(y, x);
+                p *= foreground.at<float>(y, x);
 
                 /* update with distance model */
-                p *= pdt.at<double>(y, x);
+                p *= pdt.at<float>(y, x);
 
                 /* update with skin model */
-                p *= skin.at<double>(y, x);
+                p *= skin.at<float>(y, x);
 
                 /* update with centroid X model */
-                double dx = (x - centroid.x) - (-200);
+                float dx = (x - centroid.x) - (-200);
                 p *= exp(-dx*dx/90000);
 
                 /* update with centroid Y model */
-                double dy = (double) (y - centroid.y) - (-200);
+                float dy = (float) (y - centroid.y) - (-200);
                 p *= exp(-dy*dy/90000);
 
                 map.at<float>(y, x) = p;
