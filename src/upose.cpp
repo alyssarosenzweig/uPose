@@ -15,13 +15,28 @@ namespace upose {
         m_camera.read(m_background);
     }
 
+    /* the foreground and skin models are probabilistic;
+     * that way, we can never make a mistake :-)
+     * TODO: research proper Gaussian models
+     * at the moment, just map to a sigmoid curve
+     */
+
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
+        /*
         cv::Mat foreground = cv::abs(m_background - frame);
         cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
 
         cv::blur(foreground > 0, foreground, cv::Size(5, 5));
         cv::blur(foreground > 254, foreground, cv::Size(7, 7));
-        return foreground > 254;
+        return foreground > 254;*/
+
+        cv::Mat foreground = cv::abs(m_background - frame);
+        cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
+        foreground.convertTo(foreground, CV_64F);
+        
+        cv::Mat diff = -(foreground - 40) * 0.1;
+        cv::exp(diff, diff);
+        return 1. / (1 + diff);
     }
 
      /**
@@ -44,7 +59,9 @@ namespace upose {
         return skin > 0;
     }
 
-    cv::Mat leftHandmap(cv::Size size, cv::Mat skin, cv::Point centroid) {
+    cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
+                                       cv::Mat skin,
+                                       cv::Point centroid) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
         for(int x = 0; x < size.width; ++x) {
@@ -52,8 +69,11 @@ namespace upose {
                 /* calculate probability */
                 double p = 1;
 
+                /* update with foreground model */
+                p *= foreground.at<double>(y, x);
+
                 /* update with skin model */
-                p *= skin.at<uint8_t>(y, x) ? 0.9 : 0.1;
+                p *= skin.at<double>(y, x);
 
                 /* update with centroid X model */
                 double dx = (x - centroid.x) - (-200);
@@ -77,13 +97,15 @@ namespace upose {
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
 
+        cv::imshow("Foreground", foreground);
+
         cv::Moments centroidM = cv::moments(foreground);
         cv::Point centroid = cv::Point(
                 centroidM.m10 / centroidM.m00,
                 centroidM.m01 / centroidM.m00
             );
 
-        cv::Mat handmap = leftHandmap(frame.size(), skin, centroid) * 255;
+        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, centroid) * 255;
         handmap.convertTo(handmap, CV_8U);
         applyColorMap(handmap, handmap, cv::COLORMAP_JET);
         cv::imshow("Color", handmap);
