@@ -82,13 +82,11 @@ namespace upose {
                 /* update with skin model */
                 p *= skin.at<float>(y, x);
 
-                /* update with centroid X model */
-                float dx = (x - centroid.x) - (-200);
-                p *= exp(-dx*dx/90000);
+                /* update with centroid model */
+                float dx = (x - centroid.x) - (-200),
+                      dy = (y - centroid.y) - (-200);
 
-                /* update with centroid Y model */
-                float dy = (float) (y - centroid.y) - (-200);
-                p *= exp(-dy*dy/90000);
+                p *= exp(-(dx*dx + dy*dy)/90000);
 
                 map.at<float>(y, x) = p;
             }
