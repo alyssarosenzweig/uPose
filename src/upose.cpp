@@ -77,7 +77,7 @@ namespace upose {
                 p *= foreground.at<float>(y, x);
 
                 /* update with distance model */
-                p *= pdt.at<float>(y, x);
+                //p *= pdt.at<float>(y, x);
 
                 /* update with skin model */
                 p *= skin.at<float>(y, x);
@@ -103,19 +103,15 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
 
         /* approximate probabilistic distance transform */
-        int pdtConstant = 63;
-
         cv::Mat pdt;
-        cv::boxFilter(foreground, pdt, -1, cv::Size(pdtConstant, pdtConstant),
-                                           cv::Point(-1, -1), false);
-        pdt = (pdt - foreground) / (pdtConstant*pdtConstant - 1);
+        cv::blur(foreground, pdt, cv::Size(127, 127));
         pdt = pdt.mul(foreground);
 
-        /* cv::Mat visualPDT;
+        cv::Mat visualPDT;
         visualPDT = pdt * 255;
         visualPDT.convertTo(visualPDT, CV_8U);
         applyColorMap(visualPDT, visualPDT, cv::COLORMAP_JET);
-        cv::imshow("PDT", visualPDT); */
+        cv::imshow("PDT", visualPDT);
 
         cv::Moments centroidM = cv::moments(foreground);
         cv::Point centroid = cv::Point(
