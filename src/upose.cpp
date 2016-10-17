@@ -63,8 +63,9 @@ namespace upose {
     }
 
     cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
-                                       cv::Mat pdt,
                                        cv::Mat skin,
+                                       cv::Mat fpdt,
+                                       cv::Mat spdt,
                                        cv::Point centroid) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
@@ -77,7 +78,7 @@ namespace upose {
                 p *= foreground.at<float>(y, x);
 
                 /* update with distance model */
-                //p *= pdt.at<float>(y, x);
+                //p *= spdt.at<float>(y, x);
 
                 /* update with skin model */
                 p *= skin.at<float>(y, x);
@@ -103,12 +104,16 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
 
         /* approximate probabilistic distance transform */
-        cv::Mat pdt;
-        cv::blur(foreground, pdt, cv::Size(127, 127));
-        pdt = pdt.mul(foreground);
+        cv::Mat fpdt;
+        cv::blur(foreground, fpdt, cv::Size(127, 127));
+        fpdt = fpdt.mul(foreground);
+
+        cv::Mat spdt;
+        cv::blur(skin, spdt, cv::Size(127, 127));
+        spdt = spdt.mul(skin);
 
         cv::Mat visualPDT;
-        visualPDT = pdt * 255;
+        visualPDT = spdt * 255;
         visualPDT.convertTo(visualPDT, CV_8U);
         applyColorMap(visualPDT, visualPDT, cv::COLORMAP_JET);
         cv::imshow("PDT", visualPDT);
@@ -119,7 +124,7 @@ namespace upose {
                 centroidM.m01 / centroidM.m00
             );
 
-        cv::Mat handmap = leftHandmap(frame.size(), foreground, pdt, skin, centroid) * 255;
+        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, fpdt, spdt,centroid) * 255;
         handmap.convertTo(handmap, CV_8U);
         applyColorMap(handmap, handmap, cv::COLORMAP_JET);
         cv::imshow("Color", handmap);
