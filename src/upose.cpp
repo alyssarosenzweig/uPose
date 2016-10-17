@@ -125,6 +125,12 @@ namespace upose {
             );
 
         cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, fpdt, spdt,centroid) * 255;
+
+        double confidence;
+        cv::Point lhand;
+        cv::minMaxLoc(handmap, NULL, &confidence, NULL, &lhand);
+        cv::circle(frame, lhand, 15, cv::Scalar(0, 0, 255), -1);
+
         handmap.convertTo(handmap, CV_8U);
         applyColorMap(handmap, handmap, cv::COLORMAP_JET);
         cv::imshow("Color", handmap);
