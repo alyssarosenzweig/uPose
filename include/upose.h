@@ -34,5 +34,7 @@ namespace upose {
 
             Features2D m_last2D, m_lastu2D;
             void track2DFeatures(cv::Mat skin);
+
+            cv::Point m_previousLHand;
     };
 }

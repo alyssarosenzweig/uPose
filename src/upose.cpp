@@ -13,6 +13,7 @@
 namespace upose {
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
+        m_previousLHand = cv::Point(-1, -1);
     }
 
     /* the foreground and skin models are probabilistic;
@@ -66,7 +67,8 @@ namespace upose {
                                        cv::Mat skin,
                                        cv::Mat fpdt,
                                        cv::Mat spdt,
-                                       cv::Point centroid) {
+                                       cv::Point centroid,
+                                       cv::Point previous) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
         for(int x = 0; x < size.width; ++x) {
@@ -84,10 +86,20 @@ namespace upose {
                 p *= skin.at<float>(y, x);
 
                 /* update with centroid model */
-                float dx = (x - centroid.x) - (-200),
-                      dy = (y - centroid.y) - (-200);
+                int k = 200;
 
-                p *= exp(-(dx*dx + dy*dy)/90000);
+                float dx = (x - centroid.x) - (-k),
+                      dy = (y - centroid.y) - (-k);
+
+                p *= exp(-(dx*dx + dy*dy)/(9*k*k));
+
+                /* update with motion model */
+                if(previous.x != -1 && previous.y != -1) {
+                    float mdx = (x - previous.x),
+                          mdy = (y - previous.y);
+
+                    p *= exp(-(mdx*mdx + mdy*mdy) / 90000);
+                }
 
                 map.at<float>(y, x) = p;
             }
@@ -124,16 +136,20 @@ namespace upose {
                 centroidM.m01 / centroidM.m00
             );
 
-        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, fpdt, spdt,centroid) * 255;
+        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, fpdt, spdt, centroid, m_previousLHand) * 255;
 
         double confidence;
         cv::Point lhand;
         cv::minMaxLoc(handmap, NULL, &confidence, NULL, &lhand);
-        cv::circle(frame, lhand, 15, cv::Scalar(0, 0, 255), -1);
 
         handmap.convertTo(handmap, CV_8U);
         applyColorMap(handmap, handmap, cv::COLORMAP_JET);
         cv::imshow("Color", handmap);
+
+        if(confidence > 127) {
+            cv::circle(frame, lhand, 15, cv::Scalar(0, 0, 255), -1);
+            m_previousLHand = lhand;
+        }
 
         cv::imshow("Frame", frame);
     }
