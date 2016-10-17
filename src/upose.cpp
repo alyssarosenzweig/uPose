@@ -63,6 +63,27 @@ namespace upose {
         return diff;
     }
 
+    cv::Mat generateDeltaMap(cv::Size size, cv::Point pt, 
+                             int k, int lx, int ux, int ly, int uy) {
+        cv::Mat map = cv::Mat::zeros(size, CV_32F);
+
+        float muX = k*(ux + lx) / 2, muY = k*(uy + ly) / 2;
+        float sdX = (k*ux - muX),    sdY = (k*uy - muY);
+
+        for(int x = 0; x < size.width; ++x) {
+            for(int y = 0; y < size.height; ++y) {
+                float dx = (x - pt.x) - muX,
+                      dy = (y - pt.y) - muY;
+
+                float theta = -(dx*dx + dy*dy) / (2 * (sdX*sdX + sdY*sdY));
+                map.at<float>(y, x) = theta; 
+            }
+        }
+
+        cv::exp(map, map);
+        return map;
+    }
+
     cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
                                        cv::Mat skin,
                                        cv::Mat fpdt,
@@ -70,6 +91,9 @@ namespace upose {
                                        cv::Point centroid,
                                        cv::Point previous) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
+
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, -2, 1, -2, 1),
+                motionMap   = generateDeltaMap(size, previous, 50, -1, 1, -1, 1);
 
         for(int x = 0; x < size.width; ++x) {
             for(int y = 0; y < size.height; ++y) {
@@ -86,19 +110,11 @@ namespace upose {
                 p *= skin.at<float>(y, x);
 
                 /* update with centroid model */
-                int k = 200;
-
-                float dx = (x - centroid.x) - (-k),
-                      dy = (y - centroid.y) - (-k);
-
-                p *= exp(-(dx*dx + dy*dy)/(9*k*k));
+                p *= motionMap.at<float>(y, x);
 
                 /* update with motion model */
                 if(previous.x != -1 && previous.y != -1) {
-                    float mdx = (x - previous.x),
-                          mdy = (y - previous.y);
-
-                    p *= exp(-(mdx*mdx + mdy*mdy) / 90000);
+                    p *= motionMap.at<float>(y, x);
                 }
 
                 map.at<float>(y, x) = p;
