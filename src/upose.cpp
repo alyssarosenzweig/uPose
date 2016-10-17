@@ -92,8 +92,11 @@ namespace upose {
                                        cv::Point previous) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, -2, 1, -2, 1),
+        /* TODO: generate these constants from the user */
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 50, -3, 2, -2, 2),
                 motionMap   = generateDeltaMap(size, previous, 50, -1, 1, -1, 1);
+
+        cv::imshow("Centroid", centroidMap);
 
         for(int x = 0; x < size.width; ++x) {
             for(int y = 0; y < size.height; ++y) {
@@ -110,11 +113,11 @@ namespace upose {
                 p *= skin.at<float>(y, x);
 
                 /* update with centroid model */
-                p *= motionMap.at<float>(y, x);
+                p *= centroidMap.at<float>(y, x);
 
                 /* update with motion model */
                 if(previous.x != -1 && previous.y != -1) {
-                    p *= motionMap.at<float>(y, x);
+                //    p *= motionMap.at<float>(y, x);
                 }
 
                 map.at<float>(y, x) = p;
