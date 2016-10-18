@@ -139,6 +139,11 @@ namespace upose {
         cv::blur(foreground, fpdt, cv::Size(127, 127));
         fpdt = fpdt.mul(foreground);
 
+        cv::imshow("FPDT", fpdt);
+        cv::Mat corners;
+        cv::cornerHarris(foreground, corners, 2, 3, 0.01);
+        cv::imshow("Corners", corners * 4096);
+
         cv::Mat spdt;
         cv::blur(skin, spdt, cv::Size(127, 127));
         spdt = spdt.mul(skin);
