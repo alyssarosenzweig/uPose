@@ -83,15 +83,26 @@ namespace upose {
         return map;
     }
 
-    cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
-                                       cv::Mat skin,
-                                       cv::Point centroid,
-                                       Features2D previous) {
+    cv::Mat handMap(cv::Size size, int side,
+                                   cv::Mat foreground,
+                                   cv::Mat skin,
+                                   cv::Point centroid,
+                                   Features2D previous) {
         /* TODO: generate these constants from the user */
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, -3, -1, -3, -1),
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, side, side * 3, -3, -1),
                 motionMap   = generateDeltaMap(size, previous.leftHand.pt, 50, -1, 1, -1, 1);
 
         return foreground.mul(skin).mul(centroidMap);
+    }
+ 
+    cv::Mat shoulderMap(cv::Size size, int side,
+                                       cv::Mat foreground,
+                                       cv::Point centroid,
+                                       Features2D previous) {
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, side * 1, 0, -3, -1),
+                motionMap   = generateDeltaMap(size, previous.leftShoulder.pt, 50, -1, 1, -1, 1);
+
+        return foreground.mul(centroidMap);
     }
 
     cv::Point momentCentroid(cv::Mat mat) {
@@ -121,7 +132,11 @@ namespace upose {
         cv::Point centroid = momentCentroid(foreground);
 
         cv::Size s = frame.size();
-        trackPoint(leftHandmap(s, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
+
+        trackPoint(handMap(s, -1, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
+        trackPoint(handMap(s, +1, foreground, skin, centroid, m_last2D), &m_last2D.rightHand);
+        trackPoint(shoulderMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftShoulder);
+        trackPoint(shoulderMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightShoulder);
 
         cv::imshow("Frame", frame);
 
@@ -133,6 +148,10 @@ namespace upose {
         int t = 5; /* line thickness */
 
         cv::circle(canvas, f.leftHand.pt, 15, c, -1);
+        cv::circle(canvas, f.leftShoulder.pt, 15, c, -1);
+
+        cv::circle(canvas, f.rightHand.pt, 15, c, -1);
+        cv::circle(canvas, f.rightShoulder.pt, 15, c, -1);
 
         cv::imshow("Visualization", canvas);
     }
