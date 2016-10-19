@@ -93,38 +93,10 @@ namespace upose {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
         /* TODO: generate these constants from the user */
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, 50, -3, 2, -2, 2),
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 50, -5, 3, -2, 2),
                 motionMap   = generateDeltaMap(size, previous, 50, -1, 1, -1, 1);
 
-        cv::imshow("Centroid", centroidMap);
-
-        for(int x = 0; x < size.width; ++x) {
-            for(int y = 0; y < size.height; ++y) {
-                /* calculate probability */
-                float p = 1;
-
-                /* update with foreground model */
-                p *= foreground.at<float>(y, x);
-
-                /* update with distance model */
-                //p *= spdt.at<float>(y, x);
-
-                /* update with skin model */
-                p *= skin.at<float>(y, x);
-
-                /* update with centroid model */
-                p *= centroidMap.at<float>(y, x);
-
-                /* update with motion model */
-                if(previous.x != -1 && previous.y != -1) {
-                //    p *= motionMap.at<float>(y, x);
-                }
-
-                map.at<float>(y, x) = p;
-            }
-        }
-
-        return map;
+        return foreground.mul(skin).mul(centroidMap);
     }
 
     void Context::step() {
