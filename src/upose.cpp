@@ -140,9 +140,23 @@ namespace upose {
         fpdt = fpdt.mul(foreground);
 
         cv::imshow("FPDT", fpdt);
-        cv::Mat corners;
-        cv::cornerHarris(foreground, corners, 2, 3, 0.01);
-        cv::imshow("Corners", corners * 4096);
+        /*cv::Mat corners, ex, ey, ea, em;
+        cv::Sobel(foreground, ex, -1, 1, 0);
+        cv::Sobel(foreground, ey, -1, 0, 1);
+        cv::cartToPolar(ex, ey, ea, em);
+        cv::imshow("Corners", em.mul(foreground) / 10);*/
+        /*cv::Mat temp;
+        cv::blur(foreground, temp, cv::Size(3, 3));
+        temp = foreground - temp;
+        cv::blur(temp, temp, cv::Size(11, 11));
+        cv::imshow("Temp", temp * 100);*/
+        cv::Mat temp1, temp2, tfg;
+        tfg = foreground > 0.5;
+        cv::cornerHarris(tfg, temp1, 2, 3, 0.01);
+        cv::dilate(temp1, temp2, cv::Mat());
+        cv::Mat maxima = temp1 == temp2;
+        maxima.convertTo(maxima, CV_32F);
+        cv::imshow("T", foreground.mul(maxima) / 256);
 
         cv::Mat spdt;
         cv::blur(skin, spdt, cv::Size(127, 127));
