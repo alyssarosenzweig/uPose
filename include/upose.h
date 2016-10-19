@@ -9,11 +9,16 @@
 #include <opencv2/opencv.hpp>
 
 namespace upose {
+    typedef struct {
+        cv::Point pt;
+        double confidence;
+    } TrackedPoint;
+
     struct Features2D {
-        cv::Point face;
-        cv::Point neck, leftShoulder, rightShoulder;
-        cv::Point leftElbow, rightElbow;
-        cv::Point leftHand, rightHand;
+        TrackedPoint face;
+        TrackedPoint neck, leftShoulder, rightShoulder;
+        TrackedPoint leftElbow, rightElbow;
+        TrackedPoint leftHand, rightHand;
     };
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f);
@@ -32,9 +37,6 @@ namespace upose {
             cv::Mat skinRegions(cv::Mat frame);
             cv::Mat edges(cv::Mat frame);
 
-            Features2D m_last2D, m_lastu2D;
-            void track2DFeatures(cv::Mat skin);
-
-            cv::Point m_previousLHand;
+            Features2D m_last2D;
     };
 }

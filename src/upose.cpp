@@ -13,7 +13,6 @@
 namespace upose {
     Context::Context(cv::VideoCapture& camera) : m_camera(camera) {
         m_camera.read(m_background);
-        m_previousLHand = cv::Point(-1, -1);
     }
 
     /* the foreground and skin models are probabilistic;
@@ -86,18 +85,32 @@ namespace upose {
 
     cv::Mat leftHandmap(cv::Size size, cv::Mat foreground,
                                        cv::Mat skin,
-                                       cv::Mat fpdt,
-                                       cv::Mat spdt,
                                        cv::Point centroid,
-                                       cv::Point previous) {
-        cv::Mat map = cv::Mat::zeros(size, CV_32F);
-
+                                       Features2D previous) {
         /* TODO: generate these constants from the user */
         cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, -3, -1, -3, -1),
-                motionMap   = generateDeltaMap(size, previous, 50, -1, 1, -1, 1);
+                motionMap   = generateDeltaMap(size, previous.leftHand.pt, 50, -1, 1, -1, 1);
 
         return foreground.mul(skin).mul(centroidMap);
     }
+
+    cv::Point momentCentroid(cv::Mat mat) {
+        cv::Moments moment = cv::moments(mat);
+        return cv::Point(moment.m10 / moment.m00, moment.m01 / moment.m00);
+    }
+
+    void trackPoint(cv::Mat heatmap, TrackedPoint* pt) {
+        cv::minMaxLoc(heatmap, NULL, &(pt->confidence), NULL, (&pt->pt));
+    }
+
+    cv::Mat visualizeMap(cv::Mat map) {
+        cv::Mat visualization = map * 255;
+
+        visualization.convertTo(visualization, CV_8U);
+        cv::applyColorMap(visualization, visualization, cv::COLORMAP_JET);
+
+        return visualization;
+   }
 
     void Context::step() {
         cv::Mat frame;
@@ -105,79 +118,22 @@ namespace upose {
 
         cv::Mat foreground = backgroundSubtract(frame);
         cv::Mat skin = skinRegions(frame);
+        cv::Point centroid = momentCentroid(foreground);
 
-        /* approximate probabilistic distance transform */
-        cv::Mat fpdt;
-        cv::blur(foreground, fpdt, cv::Size(127, 127));
-        fpdt = fpdt.mul(foreground);
-
-        cv::imshow("FPDT", fpdt);
-        /*cv::Mat corners, ex, ey, ea, em;
-        cv::Sobel(foreground, ex, -1, 1, 0);
-        cv::Sobel(foreground, ey, -1, 0, 1);
-        cv::cartToPolar(ex, ey, ea, em);
-        cv::imshow("Corners", em.mul(foreground) / 10);*/
-        /*cv::Mat temp;
-        cv::blur(foreground, temp, cv::Size(3, 3));
-        temp = foreground - temp;
-        cv::blur(temp, temp, cv::Size(11, 11));
-        cv::imshow("Temp", temp * 100);*/
-        cv::Mat temp1, temp2, tfg;
-        tfg = foreground > 0.5;
-        cv::cornerHarris(tfg, temp1, 2, 3, 0.01);
-        cv::dilate(temp1, temp2, cv::Mat());
-        cv::Mat maxima = temp1 == temp2;
-        maxima.convertTo(maxima, CV_32F);
-        cv::imshow("T", foreground.mul(maxima) / 256);
-
-        cv::Mat spdt;
-        cv::blur(skin, spdt, cv::Size(127, 127));
-        spdt = spdt.mul(skin);
-
-        cv::Mat visualPDT;
-        visualPDT = spdt * 255;
-        visualPDT.convertTo(visualPDT, CV_8U);
-        applyColorMap(visualPDT, visualPDT, cv::COLORMAP_JET);
-        cv::imshow("PDT", visualPDT);
-
-        cv::Moments centroidM = cv::moments(foreground);
-        cv::Point centroid = cv::Point(
-                centroidM.m10 / centroidM.m00,
-                centroidM.m01 / centroidM.m00
-            );
-
-        cv::Mat handmap = leftHandmap(frame.size(), foreground, skin, fpdt, spdt, centroid, m_previousLHand) * 255;
-
-        double confidence;
-        cv::Point lhand;
-        cv::minMaxLoc(handmap, NULL, &confidence, NULL, &lhand);
-
-        handmap.convertTo(handmap, CV_8U);
-        applyColorMap(handmap, handmap, cv::COLORMAP_JET);
-        cv::imshow("Color", handmap);
-
-        if(confidence > 127) {
-            cv::circle(frame, lhand, 15, cv::Scalar(0, 0, 255), -1);
-            m_previousLHand = lhand;
-        }
+        cv::Size s = frame.size();
+        trackPoint(leftHandmap(s, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
 
         cv::imshow("Frame", frame);
+
+        visualizeUpperSkeleton(frame, m_last2D);
     }
 
-    void visualizeUpperSkeleton(cv::Mat out, Features2D f) {
+    void visualizeUpperSkeleton(cv::Mat canvas, Features2D f) {
         cv::Scalar c(0, 200, 0); /* color */
         int t = 5; /* line thickness */
 
-        /*cv::line(out, f.leftHand, f.leftElbow, c, t);
-        cv::line(out, f.leftElbow, f.leftShoulder, c, t);*/
-        cv::line(out, f.leftShoulder, f.leftHand, c, t);
-        cv::line(out, f.leftShoulder, f.neck, c, t);
+        cv::circle(canvas, f.leftHand.pt, 15, c, -1);
 
-        /*cv::line(out, f.rightHand, f.rightElbow, c, t);
-        cv::line(out, f.rightElbow, f.rightShoulder, c, t);*/
-        cv::line(out, f.rightShoulder, f.rightHand, c, t);
-        cv::line(out, f.rightShoulder, f.neck, c, t);
-
-        cv::line(out, f.neck, f.face, c, t);
+        cv::imshow("Visualization", canvas);
     }
 }
