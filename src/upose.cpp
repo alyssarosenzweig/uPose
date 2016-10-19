@@ -93,7 +93,7 @@ namespace upose {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
 
         /* TODO: generate these constants from the user */
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, 50, -5, 3, -2, 2),
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, -3, -1, -3, -1),
                 motionMap   = generateDeltaMap(size, previous, 50, -1, 1, -1, 1);
 
         return foreground.mul(skin).mul(centroidMap);
