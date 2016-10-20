@@ -55,11 +55,8 @@ namespace upose {
     }
 
     cv::Mat generateDeltaMap(cv::Size size, cv::Point pt, 
-                             int k, int lx, int ux, int ly, int uy) {
+                             float muX, float sdX, float muY, float sdY) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
-
-        float muX = k*(ux + lx) / 2, muY = k*(uy + ly) / 2;
-        float sdX = (k*ux - muX),    sdY = (k*uy - muY);
 
         for(int y = 0; y < size.height; ++y) {
             float* data = (float*) (map.data + y * map.step);
@@ -74,6 +71,14 @@ namespace upose {
 
         cv::exp(map, map);
         return map;
+    }
+
+    cv::Mat generateDeltaMap(cv::Size size, cv::Point pt, 
+                             int k, int lx, int ux, int ly, int uy) {
+        float muX = k*(ux + lx) / 2, muY = k*(uy + ly) / 2;
+        float sdX = (k*ux - muX),    sdY = (k*uy - muY);
+
+        return generateDeltaMap(size, pt, muX, sdX, muY, sdY);
     }
 
     cv::Mat handMap(cv::Size size, int side,
@@ -92,7 +97,7 @@ namespace upose {
                                        cv::Mat foreground,
                                        cv::Point centroid,
                                        Features2D previous) {
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, 100, side * 1, 0, -3, -1),
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, -100, 50),
                 motionMap   = generateDeltaMap(size, previous.leftShoulder.pt, 50, -1, 1, -1, 1);
 
         return foreground.mul(centroidMap);
@@ -128,6 +133,7 @@ namespace upose {
 
         trackPoint(handMap(s, -1, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
         trackPoint(handMap(s, +1, foreground, skin, centroid, m_last2D), &m_last2D.rightHand);
+        cv::imshow("LS", visualizeMap(shoulderMap(s, -1, foreground, centroid, m_last2D)));
         trackPoint(shoulderMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftShoulder);
         trackPoint(shoulderMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightShoulder);
 
