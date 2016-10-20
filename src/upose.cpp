@@ -139,8 +139,6 @@ namespace upose {
         trackPoint(shoulderMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftShoulder);
         trackPoint(shoulderMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightShoulder);
 
-        cv::imshow("Frame", frame);
-
         visualizeUpperSkeleton(frame, m_last2D);
     }
 
