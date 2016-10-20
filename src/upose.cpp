@@ -69,13 +69,14 @@ namespace upose {
         float muX = k*(ux + lx) / 2, muY = k*(uy + ly) / 2;
         float sdX = (k*ux - muX),    sdY = (k*uy - muY);
 
-        for(int x = 0; x < size.width; ++x) {
-            for(int y = 0; y < size.height; ++y) {
+        for(int y = 0; y < size.height; ++y) {
+            float* data = (float*) (map.data + y * map.step);
+
+            for(int x = 0; x < size.width; ++x) {
                 float dx = (x - pt.x) - muX,
                       dy = (y - pt.y) - muY;
 
-                float theta = -(dx*dx + dy*dy) / (2 * (sdX*sdX + sdY*sdY));
-                map.at<float>(y, x) = theta; 
+                data[x] = -(dx*dx + dy*dy) / (2 * (sdX*sdX + sdY*sdY));
             }
         }
 
