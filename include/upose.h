@@ -15,7 +15,7 @@ namespace upose {
     } TrackedPoint;
 
     struct Features2D {
-        TrackedPoint face;
+        TrackedPoint head;
         TrackedPoint neck, leftShoulder, rightShoulder;
         TrackedPoint leftElbow, rightElbow;
         TrackedPoint leftHand, rightHand;

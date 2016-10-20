@@ -81,6 +81,17 @@ namespace upose {
         return generateDeltaMap(size, pt, muX, sdX, muY, sdY);
     }
 
+    cv::Mat headMap(cv::Size size, cv::Mat foreground,
+                                   cv::Mat skin,
+                                   cv::Point centroid,
+                                   Features2D previous) {
+
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, 0, 50, -200, 300);
+
+        return foreground.mul(skin).mul(centroidMap);
+    }
+ 
+
     cv::Mat handMap(cv::Size size, int side,
                                    cv::Mat foreground,
                                    cv::Mat skin,
@@ -137,6 +148,7 @@ namespace upose {
 
         cv::Size s = frame.size();
 
+        trackPoint(headMap(s, foreground, skin, centroid, m_last2D), &m_last2D.head);
         trackPoint(handMap(s, -1, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
         trackPoint(handMap(s, +1, foreground, skin, centroid, m_last2D), &m_last2D.rightHand);
         //cv::imshow("LS", visualizeMap(elbowMap(s, -1, foreground, centroid, m_last2D)));
@@ -152,6 +164,8 @@ namespace upose {
         cv::Scalar c(0, 200, 0); /* color */
         int t = 5; /* line thickness */
 
+        cv::circle(canvas, f.head.pt, 25, c, -1);
+        
         cv::circle(canvas, f.leftHand.pt, 15, c, -1);
         cv::line(canvas, f.leftHand.pt, f.leftElbow.pt, c, t);
         cv::circle(canvas, f.leftElbow.pt, 15, c, -1);
