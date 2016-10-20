@@ -22,14 +22,6 @@ namespace upose {
      */
 
     cv::Mat Context::backgroundSubtract(cv::Mat frame) {
-        /*
-        cv::Mat foreground = cv::abs(m_background - frame);
-        cv::cvtColor(foreground > 0.25*frame, foreground, CV_BGR2GRAY);
-
-        cv::blur(foreground > 0, foreground, cv::Size(5, 5));
-        cv::blur(foreground > 254, foreground, cv::Size(7, 7));
-        return foreground > 254;*/
-
         cv::Mat foreground = cv::abs(m_background - frame);
         cv::cvtColor(foreground, foreground, CV_BGR2GRAY);
         foreground.convertTo(foreground, CV_32F);
