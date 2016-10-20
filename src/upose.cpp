@@ -102,6 +102,16 @@ namespace upose {
 
         return foreground.mul(centroidMap);
     }
+    
+    cv::Mat elbowMap(cv::Size size, int side,
+                                       cv::Mat foreground,
+                                       cv::Point centroid,
+                                       Features2D previous) {
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 300),
+                motionMap   = generateDeltaMap(size, previous.leftShoulder.pt, 50, -1, 1, -1, 1);
+
+        return foreground.mul(centroidMap);
+    }
 
     cv::Point momentCentroid(cv::Mat mat) {
         cv::Moments moment = cv::moments(mat);
@@ -133,7 +143,9 @@ namespace upose {
 
         trackPoint(handMap(s, -1, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
         trackPoint(handMap(s, +1, foreground, skin, centroid, m_last2D), &m_last2D.rightHand);
-        cv::imshow("LS", visualizeMap(shoulderMap(s, -1, foreground, centroid, m_last2D)));
+        //cv::imshow("LS", visualizeMap(elbowMap(s, -1, foreground, centroid, m_last2D)));
+        trackPoint(elbowMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftElbow);
+        trackPoint(elbowMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightElbow);
         trackPoint(shoulderMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftShoulder);
         trackPoint(shoulderMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightShoulder);
 
@@ -145,9 +157,15 @@ namespace upose {
         int t = 5; /* line thickness */
 
         cv::circle(canvas, f.leftHand.pt, 15, c, -1);
+        cv::line(canvas, f.leftHand.pt, f.leftElbow.pt, c, t);
+        cv::circle(canvas, f.leftElbow.pt, 15, c, -1);
+        cv::line(canvas, f.leftElbow.pt, f.leftShoulder.pt, c, t);
         cv::circle(canvas, f.leftShoulder.pt, 15, c, -1);
 
         cv::circle(canvas, f.rightHand.pt, 15, c, -1);
+        cv::line(canvas, f.rightHand.pt, f.rightElbow.pt, c, t);
+        cv::circle(canvas, f.rightElbow.pt, 15, c, -1);
+        cv::line(canvas, f.rightElbow.pt, f.rightShoulder.pt, c, t);
         cv::circle(canvas, f.rightShoulder.pt, 15, c, -1);
 
         cv::imshow("Visualization", canvas);
