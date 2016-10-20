@@ -86,9 +86,7 @@ namespace upose {
                                    cv::Mat skin,
                                    cv::Point centroid,
                                    Features2D previous) {
-        /* TODO: generate these constants from the user */
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, -100, 300),
-                motionMap   = generateDeltaMap(size, previous.leftHand.pt, 50, -1, 1, -1, 1);
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, -100, 300);
 
         return foreground.mul(skin).mul(centroidMap);
     }
@@ -97,8 +95,7 @@ namespace upose {
                                        cv::Mat foreground,
                                        cv::Point centroid,
                                        Features2D previous) {
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, -100, 50),
-                motionMap   = generateDeltaMap(size, previous.leftShoulder.pt, 50, -1, 1, -1, 1);
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, -100, 50);
 
         return foreground.mul(centroidMap);
     }
@@ -107,8 +104,7 @@ namespace upose {
                                        cv::Mat foreground,
                                        cv::Point centroid,
                                        Features2D previous) {
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 300),
-                motionMap   = generateDeltaMap(size, previous.leftShoulder.pt, 50, -1, 1, -1, 1);
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 300);
 
         return foreground.mul(centroidMap);
     }
