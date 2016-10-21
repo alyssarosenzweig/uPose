@@ -54,6 +54,8 @@ namespace upose {
         return diff;
     }
 
+    /* generate a Gaussian radial gradient around a point pt */
+
     cv::Mat generateDeltaMap(cv::Size size, cv::Point pt, 
                              float muX, float sdX, float muY, float sdY) {
         cv::Mat map = cv::Mat::zeros(size, CV_32F);
@@ -93,31 +95,30 @@ namespace upose {
  
 
     cv::Mat handMap(cv::Size size, int side,
-                                   cv::Mat foreground,
+                                   cv::Mat foreground, cv::Mat dt,
                                    cv::Mat skin,
                                    cv::Point centroid,
                                    Features2D previous) {
         cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, -100, 300);
 
-        return foreground.mul(skin).mul(centroidMap);
+        return foreground.mul(skin).mul(centroidMap).mul(dt);
     }
  
     cv::Mat shoulderMap(cv::Size size, int side,
-                                       cv::Mat foreground,
+                                       cv::Mat foreground, cv::Mat dt,
                                        cv::Point centroid,
                                        Features2D previous) {
         cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, -100, 50);
 
-        return foreground.mul(centroidMap);
+        return foreground.mul(centroidMap).mul(dt);
     }
     
     cv::Mat elbowMap(cv::Size size, int side,
-                                       cv::Mat foreground,
-                                       cv::Point centroid,
-                                       Features2D previous) {
+                                    cv::Mat foreground, cv::Mat dt,
+                                    cv::Point centroid, Features2D previous) {
         cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 300);
 
-        return foreground.mul(centroidMap);
+        return foreground.mul(centroidMap).mul(dt);
     }
 
     cv::Point momentCentroid(cv::Mat mat) {
@@ -146,16 +147,18 @@ namespace upose {
         cv::Mat skin = skinRegions(frame);
         cv::Point centroid = momentCentroid(foreground);
 
+        cv::Mat dt;
+        cv::blur(foreground, dt, cv::Size(31, 31));
+
         cv::Size s = frame.size();
 
         trackPoint(headMap(s, foreground, skin, centroid, m_last2D), &m_last2D.head);
-        trackPoint(handMap(s, -1, foreground, skin, centroid, m_last2D), &m_last2D.leftHand);
-        trackPoint(handMap(s, +1, foreground, skin, centroid, m_last2D), &m_last2D.rightHand);
-        //cv::imshow("LS", visualizeMap(elbowMap(s, -1, foreground, centroid, m_last2D)));
-        trackPoint(elbowMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftElbow);
-        trackPoint(elbowMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightElbow);
-        trackPoint(shoulderMap(s, -1, foreground, centroid, m_last2D), &m_last2D.leftShoulder);
-        trackPoint(shoulderMap(s, +1, foreground, centroid, m_last2D), &m_last2D.rightShoulder);
+        trackPoint(handMap(s, -1, foreground, dt, skin, centroid, m_last2D), &m_last2D.leftHand);
+        trackPoint(handMap(s, +1, foreground, dt, skin, centroid, m_last2D), &m_last2D.rightHand);
+        trackPoint(elbowMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftElbow);
+        trackPoint(elbowMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightElbow);
+        trackPoint(shoulderMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftShoulder);
+        trackPoint(shoulderMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightShoulder);
 
         visualizeUpperSkeleton(frame, m_last2D);
     }
