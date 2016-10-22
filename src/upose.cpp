@@ -99,9 +99,9 @@ namespace upose {
                                    cv::Mat skin,
                                    cv::Point centroid,
                                    Features2D previous) {
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, -100, 300);
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, -100, 400);
 
-        return foreground.mul(skin).mul(centroidMap).mul(dt);
+        return foreground.mul(skin).mul(centroidMap);
     }
  
     cv::Mat shoulderMap(cv::Size size, int side,
@@ -110,16 +110,43 @@ namespace upose {
                                        Features2D previous) {
         cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, -100, 50);
 
-        return foreground.mul(centroidMap).mul(dt);
+        return foreground.mul(centroidMap);
     }
     
     cv::Mat elbowMap(cv::Size size, int side,
                                     cv::Mat foreground, cv::Mat dt,
                                     cv::Point centroid, Features2D previous) {
-        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 300);
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, -100, 50);
 
-        return foreground.mul(centroidMap).mul(dt);
+        return foreground.mul(centroidMap);
     }
+
+    cv::Mat footMap(cv::Size size, int side,
+                                   cv::Mat foreground, cv::Mat dt,
+                                   cv::Point centroid,
+                                   Features2D previous) {
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*300, 400, 200, 200);
+
+        return foreground.mul(centroidMap);
+    }
+ 
+    cv::Mat pelvisMap(cv::Size size, int side,
+                                       cv::Mat foreground, cv::Mat dt,
+                                       cv::Point centroid,
+                                       Features2D previous) {
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*100, 100, 100, 50);
+
+        return foreground.mul(centroidMap);
+    }
+    
+    cv::Mat kneeMap(cv::Size size, int side,
+                                    cv::Mat foreground, cv::Mat dt,
+                                    cv::Point centroid, Features2D previous) {
+        cv::Mat centroidMap = generateDeltaMap(size, centroid, side*200, 300, 150, 150);
+
+        return foreground.mul(centroidMap);
+    }
+
 
     cv::Point momentCentroid(cv::Mat mat) {
         cv::Moments moment = cv::moments(mat);
@@ -159,6 +186,12 @@ namespace upose {
         trackPoint(elbowMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightElbow);
         trackPoint(shoulderMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftShoulder);
         trackPoint(shoulderMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightShoulder);
+        trackPoint(pelvisMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftPelvis);
+        trackPoint(pelvisMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightPelvis);
+        trackPoint(kneeMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftKnee);
+        trackPoint(kneeMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightKnee);
+        trackPoint(footMap(s, -1, foreground, dt, centroid, m_last2D), &m_last2D.leftFoot);
+        trackPoint(footMap(s, +1, foreground, dt, centroid, m_last2D), &m_last2D.rightFoot);
 
         visualizeUpperSkeleton(frame, m_last2D);
     }
@@ -180,6 +213,19 @@ namespace upose {
         cv::circle(canvas, f.rightElbow.pt, 15, c, -1);
         cv::line(canvas, f.rightElbow.pt, f.rightShoulder.pt, c, t);
         cv::circle(canvas, f.rightShoulder.pt, 15, c, -1);
+ 
+        cv::circle(canvas, f.leftFoot.pt, 15, c, -1);
+        cv::line(canvas, f.leftFoot.pt, f.leftKnee.pt, c, t);
+        cv::circle(canvas, f.leftKnee.pt, 15, c, -1);
+        cv::line(canvas, f.leftKnee.pt, f.leftPelvis.pt, c, t);
+        cv::circle(canvas, f.leftPelvis.pt, 15, c, -1);
+
+        cv::circle(canvas, f.rightFoot.pt, 15, c, -1);
+        cv::line(canvas, f.rightFoot.pt, f.rightKnee.pt, c, t);
+        cv::circle(canvas, f.rightKnee.pt, 15, c, -1);
+        cv::line(canvas, f.rightKnee.pt, f.rightPelvis.pt, c, t);
+        cv::circle(canvas, f.rightPelvis.pt, 15, c, -1);
+
 
         cv::imshow("Visualization", canvas);
     }

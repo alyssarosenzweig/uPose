@@ -19,6 +19,10 @@ namespace upose {
         TrackedPoint neck, leftShoulder, rightShoulder;
         TrackedPoint leftElbow, rightElbow;
         TrackedPoint leftHand, rightHand;
+
+        TrackedPoint leftFoot, rightFoot;
+        TrackedPoint leftKnee, rightKnee;
+        TrackedPoint leftPelvis, rightPelvis;
     };
 
     void visualizeUpperSkeleton(cv::Mat image, Features2D f);
